@@ -310,7 +310,7 @@ void axapi::MarketQuotationAPI::OnRtnDepthMarketData(
         if (pDepthMarketData->AskVolume5         == DBL_MAX) pDepthMarketData->AskVolume5         = -1;
         if (pDepthMarketData->AveragePrice       == DBL_MAX) pDepthMarketData->AveragePrice       = -1;
         //std::cout<<"bef:"<<t_strMarketData<<std::endl;
-        sprintf_s(t_strLog, "%s:%s%d", t_strLogFuncName, "m_hashMarketDataList当前含有用户数bef:", m_hashMarketDataList.size());
+        sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数bef:", m_hashMarketDataList.size());
         LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
         /*hash_map<string, struct MarketDataField>::iterator t_iterator;
         for(t_iterator=m_hashMarketDataList.begin();t_iterator!=m_hashMarketDataList.end();t_iterator++)
@@ -366,7 +366,7 @@ void axapi::MarketQuotationAPI::OnRtnDepthMarketData(
             m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume5           = pDepthMarketData->AskVolume5;        
             m_hashMarketDataList[pDepthMarketData->InstrumentID].AveragePrice         = pDepthMarketData->AveragePrice;
         }
-        sprintf_s(t_strLog, "%s:%s%d", t_strLogFuncName, "m_hashMarketDataList当前含有用户数aft:", m_hashMarketDataList.size());
+        sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数aft:", m_hashMarketDataList.size());
         LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
         /*for(t_iterator=m_hashMarketDataList.begin();t_iterator!=m_hashMarketDataList.end();t_iterator++)
         {
@@ -1142,7 +1142,7 @@ int axapi::MarketQuotationAPI::subMarketDataSingle(char *in_strInstrument)
         memset(&t_MarketDataField, '\0', sizeof(MarketDataField));
         strcpy_s(t_MarketDataField.InstrumentID, sizeof(t_MarketDataField.InstrumentID), in_strInstrument);
         m_hashMarketDataList[in_strInstrument] = t_MarketDataField;
-        sprintf_s(t_strLog, "%s:%s%d", t_strLogFuncName, "m_hashMarketDataList当前含有用户数:", m_hashMarketDataList.size());
+        sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数:", m_hashMarketDataList.size());
         LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
 
         /*hash_map<string, struct MarketDataField>::iterator t_iterator;
@@ -1181,7 +1181,7 @@ double axapi::MarketQuotationAPI::getCurrPrice(char *in_strInstrument)
     char *t_strLogFuncName = "axapi::MarketQuotationAPI::getCurrPrice";
     char t_strLog[500];
 
-    sprintf_s(t_strLog, "%s:%s%d", t_strLogFuncName, "m_hashMarketDataList当前含有用户数:", m_hashMarketDataList.size());
+    sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数:", m_hashMarketDataList.size());
     LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
 
     if(m_hashMarketDataList.find(in_strInstrument) != m_hashMarketDataList.end())
@@ -1199,7 +1199,7 @@ axapi::MarketDataField *axapi::MarketQuotationAPI::getCurrentPrice(char *in_strI
     char *t_strLogFuncName = "axapi::MarketQuotationAPI::getCurrentPrice";
     char t_strLog[500];
 
-    sprintf_s(t_strLog, "%s:%s%d", t_strLogFuncName, "m_hashMarketDataList当前含有用户数:", m_hashMarketDataList.size());
+    sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数:", m_hashMarketDataList.size());
     LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
 
     if(m_hashMarketDataList.find(in_strInstrument) != m_hashMarketDataList.end())
