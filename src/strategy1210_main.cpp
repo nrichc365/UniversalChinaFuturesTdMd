@@ -6,8 +6,8 @@
 * 2.n√Î∆Ω≤÷
 */
 #define TRADEAPI_VERSION
-//#define CTP_TRADEAPI
-#define KSV6T_TRADEAPI
+#define CTP_TRADEAPI
+//#define KSV6T_TRADEAPI
 #define MEMORYDATA
 #define KLINESTORAGE
 #define _CRT_SECURE_NO_WARNINGS

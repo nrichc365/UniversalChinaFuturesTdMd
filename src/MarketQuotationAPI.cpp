@@ -2,8 +2,8 @@
 #define KLINESTORAGE
 //#define HQDATAFILE
 //#define KDATAFILE
-#define KSV6T_TRADEAPI
 //#define CTP_TRADEAPI
+#define KSV6T_TRADEAPI
 #define TRADINGHOURS           10    //交易时间
 #define FIRSTSECOND        3600*21   //K线开始时间点
 #define BARNUMBER_1MIN     600       //1分钟K线根数

@@ -1,5 +1,5 @@
-//#define CTP_TRADEAPI
-#define KSV6T_TRADEAPI
+#define CTP_TRADEAPI
+//#define KSV6T_TRADEAPI
 //#define DATAFILE
 #define KLINESTORAGE
 #include "MarketQuotationAPI.h"
