@@ -12,8 +12,8 @@ void main()
     axapi::TradeAPI *p_tradeAPI = new axapi::TradeAPI("6C2D786C", "8000100078", "131", "tcp://10.6.3.183:17993");
 #endif KSV6T_TRADEAPI
 #ifdef CTP_TRADEAPI
-    //axapi::TradeAPI *p_tradeAPI = new axapi::TradeAPI("4580", "8000500200", "800050", "tcp://10.6.7.196:21205");
-    axapi::TradeAPI *p_tradeAPI = new axapi::TradeAPI("4500", "80005000336", "197913", "tcp://27.115.97.3:41205");
+    axapi::TradeAPI *p_tradeAPI = new axapi::TradeAPI("4580", "8000500200", "800050", "tcp://10.6.7.196:21205");
+    //axapi::TradeAPI *p_tradeAPI = new axapi::TradeAPI("4500", "80005000336", "197913", "tcp://27.115.97.3:41205");
 #endif CTP_TRADEAPI
 
     char *t_strContract = "m1905";
