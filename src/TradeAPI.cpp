@@ -524,7 +524,7 @@ int axapi::TradeAPI::initiate(char* in_strFrontAddr)
     strcpy_s(ReqUserLoginField.Password, sizeof(ReqUserLoginField.Password), m_strPassword);
 
     /// ¶©ÔÄ
-    m_pUserApi = APINamespace CThostFtdcTraderApi::CreateFtdcTraderApi("TradeLog");
+    m_pUserApi = APINamespace CThostFtdcTraderApi::CreateFtdcTraderApi("TradeLog\\");
     m_hInitEvent = CreateEvent(NULL, true, false, NULL);
     m_pUserApi->RegisterSpi(this);
     m_pUserApi->SubscribePublicTopic(APINamespace THOST_TERT_QUICK);

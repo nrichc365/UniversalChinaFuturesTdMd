@@ -34,7 +34,7 @@ axapi::MarketQuotationAPI::MarketQuotationAPI(void)
     m_nSHFETimeDiff = 0;
     m_nCFFEXTimeDiff = 0;
     m_nIMETimeDiff = 0;
-    m_pUserApi = APINamespace CThostFtdcMdApi::CreateFtdcMdApi();
+    m_pUserApi = APINamespace CThostFtdcMdApi::CreateFtdcMdApi("MarketQuotationLog\\");
     initializeConnection("4500", "21001", "gtax@1", "tcp://10.6.7.80:41213");
 }
 

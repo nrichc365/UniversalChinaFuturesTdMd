@@ -15,35 +15,35 @@
 #define CTP_TRADEAPI
 #define KLINESTORAGE
 #include <MarketQuotationAPI.h>
+#include <string>
 #include <vector>
 
 namespace axapi
 {
-    class MarketQuotationIndex
+    class RELATIVESTRENGTHINDEX_EXPORT MarketQuotationIndex
     {
     public:
-
-        /// index计算入口
-        void caculate();
-        double getIndexValue();
-        /// 外接行情数据
-        MarketQuotationIndex(axapi::MarketQuotationAPI*, int);
-        void initialize(axapi::MarketQuotationAPI*, int);
+        /// 获得指定位置的指标值 错误返回NULL
+        double getIndexValue(int in_iCurrentOffset = 0);
+        /// 外接行情数据初始化，调用后开始计算指标值
+        int initialize(axapi::MarketQuotationAPI*, unsigned int, std::string);
         MarketQuotationIndex(void);
         ~MarketQuotationIndex(void);
 
     private:
         /// 外接行情数据
         axapi::MarketQuotationAPI* m_pMarketQuotation;
-        /// 1分钟K线计算的指标 m_array1mIndex每个成员记录不同合约index数据的起始值地址
-        std::vector<double*> m_array1mIndex;
-        /// 合约序列
-        std::vector<char*> m_arrayContracts;
-        /// 指标参数
-        int m_n1mKBars;
-        /// 指标值
-        double m_nIndexValue;
-
+        /// 当前指标合约
+        std::string m_strContract;
+        /// 指标参数 一个指标使用几根1m行情KBar
+        unsigned int m_n1mKBars;
+        /// 指标序列
+        std::vector<double> m_arrayIndexValue;
+        /// 计算入口 继承后需用户自己定义
+        void caculate();
+        /// 计算停止标志
+        bool m_blAutoRun;
+        HANDLE m_hCaculateRuning;
     };
 }
 

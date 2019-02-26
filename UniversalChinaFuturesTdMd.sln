@@ -32,6 +32,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDJ", "index\KDJ\KDJ.vcxproj", "{9F92C58F-BC47-4541-9074-EBF3FFFA41CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MarketQuotationIndex", "MarketQuotationIndex\MarketQuotationIndex.vcxproj", "{C2E74993-103D-4AF7-82E9-61E85502BD9E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9CA9FAE8-BEF0-4426-BDA1-6695649E7033} = {9CA9FAE8-BEF0-4426-BDA1-6695649E7033}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
