@@ -1,17 +1,18 @@
-#ifndef _RELATIVESTRENGTHINDEX_H_
-#define _RELATIVESTRENGTHINDEX_H_
+#ifndef _MARKETQUOTATIONINDEX_H_
+#define _MARKETQUOTATIONINDEX_H_
 #pragma once
 
-#ifdef RELATIVESTRENGTHINDEX_EXE
-#define RELATIVESTRENGTHINDEX_EXPORT
+#ifdef MARKETQUOTATIONINDEX_EXE
+#define MARKETQUOTATIONINDEX_EXPORT
 #else
-#ifdef RELATIVESTRENGTHINDEX_EXP
-#define RELATIVESTRENGTHINDEX_EXPORT __declspec(dllexport)
+#ifdef MARKETQUOTATIONINDEX_EXP
+#define MARKETQUOTATIONINDEX_EXPORT __declspec(dllexport)
 #else
-#define RELATIVESTRENGTHINDEX_EXPORT __declspec(dllimport)
-#endif RELATIVESTRENGTHINDEX_EXP
-#endif RELATIVESTRENGTHINDEX_EXE
+#define MARKETQUOTATIONINDEX_EXPORT __declspec(dllimport)
+#endif MARKETQUOTATIONINDEX_EXP
+#endif MARKETQUOTATIONINDEX_EXE
 
+#define _SCL_SECURE_NO_WARNINGS
 #define CTP_TRADEAPI
 #define KLINESTORAGE
 #include <MarketQuotationAPI.h>
@@ -20,7 +21,7 @@
 
 namespace axapi
 {
-    class RELATIVESTRENGTHINDEX_EXPORT MarketQuotationIndex
+    class MARKETQUOTATIONINDEX_EXPORT MarketQuotationIndex
     {
     public:
         /// 获得指定位置的指标值 错误返回NULL
@@ -30,7 +31,7 @@ namespace axapi
         MarketQuotationIndex(void);
         ~MarketQuotationIndex(void);
 
-    private:
+    protected:
         /// 外接行情数据
         axapi::MarketQuotationAPI* m_pMarketQuotation;
         /// 当前指标合约
@@ -47,4 +48,4 @@ namespace axapi
     };
 }
 
-#endif _RELATIVESTRENGTHINDEX_H_
+#endif _MARKETQUOTATIONINDEX_H_

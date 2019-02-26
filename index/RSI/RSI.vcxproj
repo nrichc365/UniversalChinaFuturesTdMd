@@ -95,7 +95,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;$(SolutionDir)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>MarketQuotationAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>MarketQuotationIndex.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -152,11 +152,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\RelativeStrengthIndex.cpp" />
-    <ClCompile Include="..\..\src\RelativeStrengthIndex_main.cpp" />
+    <ClCompile Include="MQI_RelativeStrengthIndex.cpp" />
+    <ClCompile Include="MQI_RelativeStrengthIndex_main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\RelativeStrengthIndex.h" />
+    <ClInclude Include="..\..\src\MarketQuotationIndex.h" />
+    <ClInclude Include="MQI_RelativeStrengthIndex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

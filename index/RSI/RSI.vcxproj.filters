@@ -15,15 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\RelativeStrengthIndex_main.cpp">
+    <ClCompile Include="MQI_RelativeStrengthIndex.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\RelativeStrengthIndex.cpp">
+    <ClCompile Include="MQI_RelativeStrengthIndex_main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\RelativeStrengthIndex.h">
+    <ClInclude Include="..\..\src\MarketQuotationIndex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MQI_RelativeStrengthIndex.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

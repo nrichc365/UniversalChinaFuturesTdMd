@@ -1,5 +1,4 @@
-#define _SCL_SECURE_NO_WARNINGS
-#define RELATIVESTRENGTHINDEX_EXP
+#define MARKETQUOTATIONINDEX_EXP
 #define CTP_TRADEAPI
 #include "MarketQuotationIndex.h"
 #include <thread>
@@ -55,6 +54,8 @@ int axapi::MarketQuotationIndex::initialize(axapi::MarketQuotationAPI *in_pMarke
     {
         return -200;
     }*/
+
+
 
     m_blAutoRun = true;
     std::thread autorun(&MarketQuotationIndex::caculate, this);
