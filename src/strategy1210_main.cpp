@@ -39,8 +39,12 @@ int g_nOffsetInterval = 10;
 int g_nOffsetPriceDiff = 10;
 // 止盈平仓
 int g_nOffsetPriceDiff2 = 0;
-//撤单等待间隔
+// 撤单等待间隔
 int g_nCancelWaitSeconds = 0;
+// 最大回撤触发阀值
+int g_nProfitFallOffsetValve = 9999;
+// 最大回撤强平比例
+double g_dbProfitFallRate = 0.5;
 
 //void InstrumentStatus(axapi::TradeAPI* t_tradeapi, char *t_strInstrument)
 //{
@@ -279,8 +283,18 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                         continue;
                     }
 
+                    // 更新最高价
+                    if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
+                        && t_objTradeInfo.Price < t_currentPrice->LastPrice)
+                        || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
+                            && t_objTradeInfo.Price > t_currentPrice->LastPrice))
+                    {
+                        t_tradeapi->setTradeInfo(i, "Price", t_currentPrice->LastPrice);
+                        t_objTradeInfo.Price = t_currentPrice->LastPrice;
+                    }
                     /*
                     * 是否强平
+                    * 0.最大回撤
                     * 1.n秒强平
                     * 2.止损平仓
                     * 3.止盈平仓
@@ -314,15 +328,30 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     sprintf_s(g_strLog, "curMinutes:%d,t_TradeInfoTime:%d", curMinutes, t_TradeInfoTime);
                     LOG4CPLUS_DEBUG(g_objLogger_DEBUG, g_strLog);
 
+                    // 达到盈利阀值最大回撤比例止盈
+                    if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
+                        && (t_currentPrice->LastPrice - t_objTradeInfo.Price) >= g_nProfitFallOffsetValve)
+                        || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
+                            && (t_currentPrice->LastPrice - t_objTradeInfo.apiTradeField.Price) * (-1) >= g_nProfitFallOffsetValve))
+                    {
+                        if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
+                            && t_currentPrice->LastPrice <= t_objTradeInfo.Price - (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * g_dbProfitFallRate)
+                            || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
+                                && t_currentPrice->LastPrice >= t_objTradeInfo.Price + (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * (-1) * g_dbProfitFallRate))
+                        {
+                            sprintf_s(t_offsettype, 9, "prffal");
+                            t_offsetAction = true;
+                        }
+                    }
                     // 持仓时间超过限制则平仓
-                    if (curMinutes - t_TradeInfoTime >= g_nOffsetInterval)
+                    else if (curMinutes - t_TradeInfoTime >= g_nOffsetInterval)
                     {
                         sprintf_s(t_offsettype, 9, "timeout");
                         t_offsetAction = true;
                     }
                     // 多单止损平仓
                     else if (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && (t_currentPrice->LastPrice - t_objTradeInfo.apiTradeField.Price)
+                        && (t_currentPrice->LastPrice - t_objTradeInfo.Price)
                         <= (-1) * g_nOffsetPriceDiff * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick)
                     {
                         sprintf_s(t_offsettype, 9, "byprsout");
@@ -330,7 +359,7 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     }
                     // 空单止损平仓
                     else if (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                        && (t_currentPrice->LastPrice - t_objTradeInfo.apiTradeField.Price)
+                        && (t_currentPrice->LastPrice - t_objTradeInfo.Price)
                         >= g_nOffsetPriceDiff * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick)
                     {
                         sprintf_s(t_offsettype, 9, "slprsout");
@@ -550,6 +579,7 @@ int main()
     char INI_FILE[] = "config.ini";
     char t_TradeServerADDR[100], t_MDServerAddr[100], t_CustNo[100], t_CustPass[100], t_BrokerNO[100], t_SleepTime[100];
     char t_OrderStyle[10], t_CurrentPricePremium[100], t_OffsetAllTime[100], t_OffsetPriceDiff[100], t_OffsetPriceDiff2[100], t_CancelWaitSeconds[100];
+    char t_ProfitFallOffsetValve[100], t_ProfitFallRate[100];
     char t_chInstrument[17];
     int t_nSleepTime, t_nCurrentPricePremium, t_nOffsetAllTime;
 #ifdef KSV6T_TRADEAPI
@@ -571,6 +601,8 @@ int main()
     GetConfigString(INI_FILE, "SLEEPTIME", t_SleepTime, sizeof(t_SleepTime));
     GetConfigString(INI_FILE, "OFFSETPRICEDIFF", t_OffsetPriceDiff, sizeof(t_OffsetPriceDiff));
     GetConfigString(INI_FILE, "OFFSETPRICEDIFF2", t_OffsetPriceDiff2, sizeof(t_OffsetPriceDiff2));
+    GetConfigString(INI_FILE, "PROFITFALLOFFSETVALVE", t_ProfitFallOffsetValve, sizeof(t_ProfitFallOffsetValve));
+    GetConfigString(INI_FILE, "PROFITFALLRATE", t_ProfitFallRate, sizeof(t_ProfitFallRate));
     GetConfigString(INI_FILE, "ORDERSTYLE", t_OrderStyle, sizeof(t_OrderStyle));
     GetConfigString(INI_FILE, "CURRENTPRICE_PREMIUM", t_CurrentPricePremium, sizeof(t_CurrentPricePremium));
     GetConfigString(INI_FILE, "OFFSETALLMINUTES", t_OffsetAllTime, sizeof(t_OffsetAllTime));
@@ -581,6 +613,8 @@ int main()
     g_nOffsetPriceDiff = atoi(t_OffsetPriceDiff);
     g_nOffsetPriceDiff2 = atoi(t_OffsetPriceDiff2);
     g_nCancelWaitSeconds = atoi(t_CancelWaitSeconds);
+    g_nProfitFallOffsetValve = atoi(t_ProfitFallOffsetValve);
+    g_dbProfitFallRate = atof(t_ProfitFallRate);
 
     sprintf_s(g_strLog, "ServerAddr:%s/%s\n\
                         USER:%s/%s\n\
@@ -690,16 +724,16 @@ int main()
                 t_PriceChange = t_pLaterPrice->LastPrice - t_pFormerPrice2.LastPrice;
                 t_VolumeChange = (t_pLaterPrice->Volume - t_pFormerPrice2.Volume) - (t_pFormerPrice2.Volume - t_pFormerPrice1.Volume);
                 t_OpenInterestChange = t_pLaterPrice->OpenInterest - t_pFormerPrice2.OpenInterest;
-                sprintf_s(g_strLog, "PriceChange:%f;VolumeChange:%f;OpenInterestChange:%f", t_PriceChange, t_VolumeChange, t_OpenInterestChange);
+                sprintf_s(g_strLog, "PriceChange:%f;VolumeChange:%f;OpenInterestChange:%f;AveragePrice:%f", t_PriceChange, t_VolumeChange, t_OpenInterestChange, (t_pLaterPrice->Turnover / t_pLaterPrice->Volume));
                 LOG4CPLUS_INFO(g_objLogger_INFO, g_strLog);
                 if (t_PriceChange > 0 && t_VolumeChange > 0 && t_OpenInterestChange > 0)
                 {
-                    if (strcmp(t_strStrategy_PPP, "sell") == 0)
+                    if (strcmp(t_strStrategy_PPP, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_SELL;
                     }
-                    else if (strcmp(t_strStrategy_PPP, "buy") == 0)
+                    else if (strcmp(t_strStrategy_PPP, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_BUY;
@@ -711,12 +745,12 @@ int main()
                 }
                 else if (t_PriceChange > 0 && t_VolumeChange > 0 && t_OpenInterestChange < 0)
                 {
-                    if (strcmp(t_strStrategy_PPN, "sell") == 0)
+                    if (strcmp(t_strStrategy_PPN, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_SELL;
                     }
-                    else if (strcmp(t_strStrategy_PPN, "buy") == 0)
+                    else if (strcmp(t_strStrategy_PPN, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_BUY;
@@ -728,12 +762,12 @@ int main()
                 }
                 else if (t_PriceChange > 0 && t_VolumeChange < 0 && t_OpenInterestChange > 0)
                 {
-                    if (strcmp(t_strStrategy_PNP, "sell") == 0)
+                    if (strcmp(t_strStrategy_PNP, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_SELL;
                     }
-                    else if (strcmp(t_strStrategy_PNP, "buy") == 0)
+                    else if (strcmp(t_strStrategy_PNP, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_BUY;
@@ -745,12 +779,12 @@ int main()
                 }
                 else if (t_PriceChange > 0 && t_VolumeChange < 0 && t_OpenInterestChange < 0)
                 {
-                    if (strcmp(t_strStrategy_PNN, "sell") == 0)
+                    if (strcmp(t_strStrategy_PNN, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_SELL;
                     }
-                    else if (strcmp(t_strStrategy_PNN, "buy") == 0)
+                    else if (strcmp(t_strStrategy_PNN, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_BUY;
@@ -762,12 +796,12 @@ int main()
                 }
                 else if (t_PriceChange < 0 && t_VolumeChange > 0 && t_OpenInterestChange > 0)
                 {
-                    if (strcmp(t_strStrategy_NPP, "sell") == 0)
+                    if (strcmp(t_strStrategy_NPP, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_SELL;
                     }
-                    else if (strcmp(t_strStrategy_NPP, "buy") == 0)
+                    else if (strcmp(t_strStrategy_NPP, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_BUY;
@@ -779,12 +813,12 @@ int main()
                 }
                 else if (t_PriceChange < 0 && t_VolumeChange > 0 && t_OpenInterestChange < 0)
                 {
-                    if (strcmp(t_strStrategy_NPN, "sell") == 0)
+                    if (strcmp(t_strStrategy_NPN, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_SELL;
                     }
-                    else if (strcmp(t_strStrategy_NPN, "buy") == 0)
+                    else if (strcmp(t_strStrategy_NPN, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_BUY;
@@ -796,12 +830,12 @@ int main()
                 }
                 else if (t_PriceChange < 0 && t_VolumeChange < 0 && t_OpenInterestChange > 0)
                 {
-                    if (strcmp(t_strStrategy_NNP, "sell") == 0)
+                    if (strcmp(t_strStrategy_NNP, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_SELL;
                     }
-                    else if (strcmp(t_strStrategy_NNP, "buy") == 0)
+                    else if (strcmp(t_strStrategy_NNP, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_BUY;
@@ -813,12 +847,12 @@ int main()
                 }
                 else if (t_PriceChange < 0 && t_VolumeChange < 0 && t_OpenInterestChange < 0)
                 {
-                    if (strcmp(t_strStrategy_NNN, "sell") == 0)
+                    if (strcmp(t_strStrategy_NNN, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_SELL;
                     }
-                    else if (strcmp(t_strStrategy_NNN, "buy") == 0)
+                    else if (strcmp(t_strStrategy_NNN, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume))
                     {
                         t_OrderFlag = true;
                         t_bsFlag = ORDER_DIRECTION_BUY;
