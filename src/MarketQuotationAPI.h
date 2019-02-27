@@ -211,7 +211,7 @@ namespace axapi
         int  OffsetValue;
     };
 
-    class MarketQuotationAPI_EXPORT MarketQuotationAPI: public APINamespace CThostFtdcMdSpi
+    class MarketQuotationAPI_EXPORT MarketQuotationAPI : public APINamespace CThostFtdcMdSpi
     {
         /*
         * 初始化
@@ -290,15 +290,15 @@ namespace axapi
         /// 初始化K线时间线数据
         void initiateTradingTimeLine(char**, int);
         /// 订阅新合约初始化K线存储
-        int initialKMarketDataSingle(char*);
+        int initialKMarketDataSingle(const char*);
         /// 查找合约是否已订阅，并获取到合约数据索引号
-        int findMarketDataIndex(char*);
+        int findMarketDataIndex(const char*);
         /// (弃用)查找当前时间是否属于交易时间内以及时间轴上位置
         int findCurrentTradingTimeLineOffset();
         /// 查找当前时间是否属于指定合约交易时间内以及时间轴上位置
-        int findCurrentTradingTimeLineOffset(char*);
+        int findCurrentTradingTimeLineOffset(const char*);
         /// 记录K线数据
-        void recordKData(char*);
+        void recordKData(const char*);
 #endif KLINESTORAGE
     public:
         /// 订阅多个行情
@@ -306,11 +306,13 @@ namespace axapi
         /// 订阅一个行情
         int subMarketDataSingle(char *in_strInstrument);
         /// 得到指定合约的行情
-        double getCurrPrice(char *in_strInstrument);
-        MarketDataField *getCurrentPrice(char *in_strInstrument);
-        /// 得到K线数据,默认得到指定合约1分钟K线
+        double getCurrPrice(const char *in_strInstrument);
+        MarketDataField *getCurrentPrice(const char *in_strInstrument);
 #ifdef KLINESTORAGE
-        KMarketDataField *getKLine(char *in_strInstrument, int in_iSecondsPeriod=1, int in_iCurrentOffset=0);
+        /// 得到指定合约的K线数据,指定与最新K线的偏移量,默认得到最新的1分钟K线数据
+        KMarketDataField *getKLine(const char *in_strInstrument, int in_iSecondsPeriod = 1, int in_iCurrentOffset = 0);
+        /// 得到指定合约的K线数据,指定所处当天K线的位置,默认得到第一分钟的1分钟K线数据
+        KMarketDataField *getKLineBySerials(const char *in_strInstrument, int in_iSecondsPeriod = 1, int in_iPosition = 1);
 #endif KLINESTORAGE
 #pragma endregion
 

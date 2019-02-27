@@ -16,14 +16,26 @@
 
 namespace axapi
 {
+    /// RSI指标结构
+    struct MQI_RelativeStrengthIndexField
+    {
+        /// 指标值
+        double indexValue;
+        /// 当日第几根K线
+        int BarSerials;
+    };
+
     class MQI_RelativeStrengthIndex :
         public MarketQuotationIndex
     {
     public:
         MQI_RelativeStrengthIndex();
         ~MQI_RelativeStrengthIndex();
-        int initialize(axapi::MarketQuotationAPI *, unsigned int, std::string);
+        /// 获得指定位置的指标值 错误返回NULL
+        double getIndexValue(int in_iCurrentOffset = 0);
     private:
+        /// 指标序列
+        std::vector<MQI_RelativeStrengthIndexField> m_arrayIndexValue;
         /// 计算入口 重新定义为RSI
         void caculate();
     };

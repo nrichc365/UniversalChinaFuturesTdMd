@@ -24,8 +24,8 @@ namespace axapi
     class MARKETQUOTATIONINDEX_EXPORT MarketQuotationIndex
     {
     public:
-        /// 获得指定位置的指标值 错误返回NULL
-        double getIndexValue(int in_iCurrentOffset = 0);
+        /// 获得指定位置的指标值 错误返回NULL 需用户自己实现
+        virtual double getIndexValue(int in_iCurrentOffset = 0);
         /// 外接行情数据初始化，调用后开始计算指标值
         int initialize(axapi::MarketQuotationAPI*, unsigned int, std::string);
         MarketQuotationIndex(void);
@@ -41,7 +41,7 @@ namespace axapi
         /// 指标序列
         std::vector<double> m_arrayIndexValue;
         /// 计算入口 继承后需用户自己定义
-        void caculate();
+        virtual void caculate() = 0;
         /// 计算停止标志
         bool m_blAutoRun;
         HANDLE m_hCaculateRuning;

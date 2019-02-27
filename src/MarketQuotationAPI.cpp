@@ -14,7 +14,7 @@
 #define BARNUMBER_30MIN    20        //20分钟K线根数
 #define BARNUMBER_60MIN    10        //60分钟K线根数
 #define TRADINGTIMELINETYPE 1        //时间轴数量
-#define TRADINGTIMELINEMIN  615      //时间轴上时间点数量
+#define TRADINGTIMELINEMIN  1095      //时间轴上时间点数量
 #include "MarketQuotationAPI.h"
 #include <iostream>
 #include <fstream>
@@ -23,7 +23,7 @@
 
 axapi::MarketQuotationAPI::MarketQuotationAPI(void)
 {
-    if(initializeLog() == 0)
+    if (initializeLog() == 0)
     {
         //LOG4CPLUS_FATAL(m_root, "initialize LOG OK");
         LOG4CPLUS_FATAL(m_objLogger, "initialize LOG OK");
@@ -44,7 +44,7 @@ axapi::MarketQuotationAPI::MarketQuotationAPI(
     APINamespace TThostFtdcPasswordType in_strPasswd,
     char *in_strFrontAddr)
 {
-    if(initializeLog() == 0)
+    if (initializeLog() == 0)
     {
         //LOG4CPLUS_FATAL(m_root, "initialize LOG OK");
         LOG4CPLUS_FATAL(m_objLogger, "initialize LOG OK");
@@ -57,7 +57,7 @@ axapi::MarketQuotationAPI::MarketQuotationAPI(
     m_nIMETimeDiff = 0;
     m_pUserApi = APINamespace CThostFtdcMdApi::CreateFtdcMdApi();
 #ifdef KLINESTORAGE
-    initiateTradingTimeLine(NULL,0);
+    initiateTradingTimeLine(NULL, 0);
 #endif KLINESTORAGE
 #ifdef HQDATAFILE
     initializeHQDataIntoFiles();
@@ -69,7 +69,7 @@ axapi::MarketQuotationAPI::~MarketQuotationAPI(void)
 {
     m_hashMarketDataList.clear();
 #ifdef KLINESTORAGE
-    for(unsigned int i=0;i<m_array1mKLine.size();i++)
+    for (unsigned int i = 0; i < m_array1mKLine.size(); i++)
     {
         free(m_array1mKLine[i]);
         free(m_array3mKLine[i]);
@@ -79,7 +79,7 @@ axapi::MarketQuotationAPI::~MarketQuotationAPI(void)
         free(m_array30mKLine[i]);
         free(m_array60mKLine[i]);
     }
-    for(int i=0;i<TRADINGTIMELINETYPE;i++)
+    for (int i = 0; i < TRADINGTIMELINETYPE; i++)
     {
         free(m_TradingTimeLine[i]);
     }
@@ -144,39 +144,39 @@ void axapi::MarketQuotationAPI::OnRspUserLogin(
 {
     char *t_strLogFuncName = "axapi::MarketQuotationAPI::OnRspUserLogin";
     char t_strLog[500];
-    try{
+    try {
         sprintf_s(t_strLog, "%s", t_strLogFuncName);
         LOG4CPLUS_TRACE(m_objLogger, t_strLog);
 
         double t_dblocaltime = getLocalTime();
-        if(pRspInfo->ErrorID == 0 && pRspUserLogin != NULL){
+        if (pRspInfo->ErrorID == 0 && pRspUserLogin != NULL) {
             sprintf_s(t_strLog, "%s:%s%s", t_strLogFuncName, "响应 | 登录成功...当前交易日:", pRspUserLogin->TradingDay);
             LOG4CPLUS_INFO(m_objLogger, t_strLog);
             m_nCFFEXTimeDiff = getTimebyFormat(pRspUserLogin->FFEXTime) - t_dblocaltime;
             sprintf_s(t_strLog, "%s:%s%f%s%f%c%s%s%d", t_strLogFuncName, "响应 | 本地时间", t_dblocaltime, "与交易所CFFEX时间", getTimebyFormat(pRspUserLogin->FFEXTime), '(', pRspUserLogin->FFEXTime, ")相差", m_nCFFEXTimeDiff);
             LOG4CPLUS_INFO(m_objLogger, t_strLog);
-            m_nCZCETimeDiff  = getTimebyFormat(pRspUserLogin->CZCETime) - t_dblocaltime;
+            m_nCZCETimeDiff = getTimebyFormat(pRspUserLogin->CZCETime) - t_dblocaltime;
             sprintf_s(t_strLog, "%s:%s%f%s%f%c%s%s%d", t_strLogFuncName, "响应 | 本地时间", t_dblocaltime, "与交易所CZCE时间", getTimebyFormat(pRspUserLogin->CZCETime), '(', pRspUserLogin->CZCETime, ")相差", m_nCZCETimeDiff);
             LOG4CPLUS_INFO(m_objLogger, t_strLog);
-            m_nDCETimeDiff   = getTimebyFormat(pRspUserLogin->DCETime)  - t_dblocaltime;
+            m_nDCETimeDiff = getTimebyFormat(pRspUserLogin->DCETime) - t_dblocaltime;
             sprintf_s(t_strLog, "%s:%s%f%s%f%c%s%s%d", t_strLogFuncName, "响应 | 本地时间", t_dblocaltime, "与交易所DCE时间", getTimebyFormat(pRspUserLogin->DCETime), '(', pRspUserLogin->DCETime, ")相差", m_nDCETimeDiff);
             LOG4CPLUS_INFO(m_objLogger, t_strLog);
-            m_nIMETimeDiff   = getTimebyFormat(pRspUserLogin->SHFETime) - t_dblocaltime;
+            m_nIMETimeDiff = getTimebyFormat(pRspUserLogin->SHFETime) - t_dblocaltime;
             sprintf_s(t_strLog, "%s:%s%f%s%f%c%s%s%d", t_strLogFuncName, "响应 | 本地时间", t_dblocaltime, "与交易所IME时间", getTimebyFormat(pRspUserLogin->SHFETime), '(', pRspUserLogin->SHFETime, ")相差", m_nIMETimeDiff);
             LOG4CPLUS_INFO(m_objLogger, t_strLog);
-            m_nSHFETimeDiff  = getTimebyFormat(pRspUserLogin->SHFETime) - t_dblocaltime;
+            m_nSHFETimeDiff = getTimebyFormat(pRspUserLogin->SHFETime) - t_dblocaltime;
             sprintf_s(t_strLog, "%s:%s%f%s%f%c%s%s%d", t_strLogFuncName, "响应 | 本地时间", t_dblocaltime, "与交易所SHFE时间", getTimebyFormat(pRspUserLogin->SHFETime), '(', pRspUserLogin->SHFETime, ")相差", m_nSHFETimeDiff);
             LOG4CPLUS_INFO(m_objLogger, t_strLog);
         }
 
-        if(pRspInfo->ErrorID != 0)
+        if (pRspInfo->ErrorID != 0)
         {
             sprintf_s(t_strLog, "%s:%s%d%s", t_strLogFuncName, " 响应 | 登录错误...", pRspInfo->ErrorID, pRspInfo->ErrorMsg);
             LOG4CPLUS_FATAL(m_objLogger, t_strLog);
         }
-        if(bIsLast) SetEvent(m_hInitEvent);
+        if (bIsLast) SetEvent(m_hInitEvent);
     }
-    catch(std::exception e)
+    catch (std::exception e)
     {
         sprintf_s(t_strLog, "%s", e.what());
         LOG4CPLUS_FATAL(m_objLogger, t_strLog);
@@ -226,7 +226,7 @@ void axapi::MarketQuotationAPI::OnRspSubMarketData(
     sprintf_s(t_strLog, "%s", t_strLogFuncName);
     LOG4CPLUS_TRACE(m_objLogger, t_strLog);
 
-    if(bIsLast)
+    if (bIsLast)
     {
         sprintf_s(t_strLog, "%s:%s订阅行情成功", t_strLogFuncName, pSpecificInstrument->InstrumentID);
         LOG4CPLUS_INFO(m_objLogger, t_strLog);
@@ -249,7 +249,7 @@ void axapi::MarketQuotationAPI::OnRspUnSubMarketData(
     sprintf_s(t_strLog, "%s", t_strLogFuncName);
     LOG4CPLUS_TRACE(m_objLogger, t_strLog);
 
-    if(bIsLast)
+    if (bIsLast)
     {
         sprintf_s(t_strLog, "%s:%s退订行情成功", t_strLogFuncName, pSpecificInstrument->InstrumentID);
         LOG4CPLUS_INFO(m_objLogger, t_strLog);
@@ -272,43 +272,43 @@ void axapi::MarketQuotationAPI::OnRtnDepthMarketData(
     try
     {
         //处理特殊数据
-        if (pDepthMarketData->PreOpenInterest    == DBL_MAX) pDepthMarketData->PreOpenInterest    = -1;
-        if (pDepthMarketData->PreClosePrice      == DBL_MAX) pDepthMarketData->PreClosePrice      = -1;
+        if (pDepthMarketData->PreOpenInterest == DBL_MAX) pDepthMarketData->PreOpenInterest = -1;
+        if (pDepthMarketData->PreClosePrice == DBL_MAX) pDepthMarketData->PreClosePrice = -1;
         if (pDepthMarketData->PreSettlementPrice == DBL_MAX) pDepthMarketData->PreSettlementPrice = -1;
-        if (pDepthMarketData->LastPrice          == DBL_MAX) pDepthMarketData->LastPrice          = -1;
-        if (pDepthMarketData->Volume             == INT_MAX) pDepthMarketData->Volume             = -1;
-        if (pDepthMarketData->Turnover           == DBL_MAX) pDepthMarketData->Turnover           = -1;
-        if (pDepthMarketData->OpenInterest       == DBL_MAX) pDepthMarketData->OpenInterest       = -1;
-        if (pDepthMarketData->OpenPrice          == DBL_MAX) pDepthMarketData->OpenPrice          = -1;
-        if (pDepthMarketData->ClosePrice         == DBL_MAX) pDepthMarketData->ClosePrice         = -1;
-        if (pDepthMarketData->HighestPrice       == DBL_MAX) pDepthMarketData->HighestPrice       = -1;
-        if (pDepthMarketData->LowestPrice        == DBL_MAX) pDepthMarketData->LowestPrice        = -1;
-        if (pDepthMarketData->SettlementPrice    == DBL_MAX) pDepthMarketData->SettlementPrice    = -1;
-        if (pDepthMarketData->LowerLimitPrice    == DBL_MAX) pDepthMarketData->LowerLimitPrice    = -1;
-        if (pDepthMarketData->UpperLimitPrice    == DBL_MAX) pDepthMarketData->UpperLimitPrice    = -1;
-        if (pDepthMarketData->PreDelta           == DBL_MAX) pDepthMarketData->PreDelta           = -1;
-        if (pDepthMarketData->CurrDelta          == DBL_MAX) pDepthMarketData->CurrDelta          = -1;
-        if (pDepthMarketData->BidPrice1          == DBL_MAX) pDepthMarketData->BidPrice1          = -1;
-        if (pDepthMarketData->BidVolume1         == DBL_MAX) pDepthMarketData->BidVolume1         = -1;
-        if (pDepthMarketData->AskPrice1          == DBL_MAX) pDepthMarketData->AskPrice1          = -1;
-        if (pDepthMarketData->AskVolume1         == DBL_MAX) pDepthMarketData->AskVolume1         = -1;
-        if (pDepthMarketData->BidPrice2          == DBL_MAX) pDepthMarketData->BidPrice2          = -1;
-        if (pDepthMarketData->BidVolume2         == DBL_MAX) pDepthMarketData->BidVolume2         = -1;
-        if (pDepthMarketData->AskPrice2          == DBL_MAX) pDepthMarketData->AskPrice2          = -1;
-        if (pDepthMarketData->AskVolume2         == DBL_MAX) pDepthMarketData->AskVolume2         = -1;
-        if (pDepthMarketData->BidPrice3          == DBL_MAX) pDepthMarketData->BidPrice3          = -1;
-        if (pDepthMarketData->BidVolume3         == DBL_MAX) pDepthMarketData->BidVolume3         = -1;
-        if (pDepthMarketData->AskPrice3          == DBL_MAX) pDepthMarketData->AskPrice3          = -1;
-        if (pDepthMarketData->AskVolume3         == DBL_MAX) pDepthMarketData->AskVolume3         = -1;
-        if (pDepthMarketData->BidPrice4          == DBL_MAX) pDepthMarketData->BidPrice4          = -1;
-        if (pDepthMarketData->BidVolume4         == DBL_MAX) pDepthMarketData->BidVolume4         = -1;
-        if (pDepthMarketData->AskPrice4          == DBL_MAX) pDepthMarketData->AskPrice4          = -1;
-        if (pDepthMarketData->AskVolume4         == DBL_MAX) pDepthMarketData->AskVolume4         = -1;
-        if (pDepthMarketData->BidPrice5          == DBL_MAX) pDepthMarketData->BidPrice5          = -1;
-        if (pDepthMarketData->BidVolume5         == DBL_MAX) pDepthMarketData->BidVolume5         = -1;
-        if (pDepthMarketData->AskPrice5          == DBL_MAX) pDepthMarketData->AskPrice5          = -1;
-        if (pDepthMarketData->AskVolume5         == DBL_MAX) pDepthMarketData->AskVolume5         = -1;
-        if (pDepthMarketData->AveragePrice       == DBL_MAX) pDepthMarketData->AveragePrice       = -1;
+        if (pDepthMarketData->LastPrice == DBL_MAX) pDepthMarketData->LastPrice = -1;
+        if (pDepthMarketData->Volume == INT_MAX) pDepthMarketData->Volume = -1;
+        if (pDepthMarketData->Turnover == DBL_MAX) pDepthMarketData->Turnover = -1;
+        if (pDepthMarketData->OpenInterest == DBL_MAX) pDepthMarketData->OpenInterest = -1;
+        if (pDepthMarketData->OpenPrice == DBL_MAX) pDepthMarketData->OpenPrice = -1;
+        if (pDepthMarketData->ClosePrice == DBL_MAX) pDepthMarketData->ClosePrice = -1;
+        if (pDepthMarketData->HighestPrice == DBL_MAX) pDepthMarketData->HighestPrice = -1;
+        if (pDepthMarketData->LowestPrice == DBL_MAX) pDepthMarketData->LowestPrice = -1;
+        if (pDepthMarketData->SettlementPrice == DBL_MAX) pDepthMarketData->SettlementPrice = -1;
+        if (pDepthMarketData->LowerLimitPrice == DBL_MAX) pDepthMarketData->LowerLimitPrice = -1;
+        if (pDepthMarketData->UpperLimitPrice == DBL_MAX) pDepthMarketData->UpperLimitPrice = -1;
+        if (pDepthMarketData->PreDelta == DBL_MAX) pDepthMarketData->PreDelta = -1;
+        if (pDepthMarketData->CurrDelta == DBL_MAX) pDepthMarketData->CurrDelta = -1;
+        if (pDepthMarketData->BidPrice1 == DBL_MAX) pDepthMarketData->BidPrice1 = -1;
+        if (pDepthMarketData->BidVolume1 == DBL_MAX) pDepthMarketData->BidVolume1 = -1;
+        if (pDepthMarketData->AskPrice1 == DBL_MAX) pDepthMarketData->AskPrice1 = -1;
+        if (pDepthMarketData->AskVolume1 == DBL_MAX) pDepthMarketData->AskVolume1 = -1;
+        if (pDepthMarketData->BidPrice2 == DBL_MAX) pDepthMarketData->BidPrice2 = -1;
+        if (pDepthMarketData->BidVolume2 == DBL_MAX) pDepthMarketData->BidVolume2 = -1;
+        if (pDepthMarketData->AskPrice2 == DBL_MAX) pDepthMarketData->AskPrice2 = -1;
+        if (pDepthMarketData->AskVolume2 == DBL_MAX) pDepthMarketData->AskVolume2 = -1;
+        if (pDepthMarketData->BidPrice3 == DBL_MAX) pDepthMarketData->BidPrice3 = -1;
+        if (pDepthMarketData->BidVolume3 == DBL_MAX) pDepthMarketData->BidVolume3 = -1;
+        if (pDepthMarketData->AskPrice3 == DBL_MAX) pDepthMarketData->AskPrice3 = -1;
+        if (pDepthMarketData->AskVolume3 == DBL_MAX) pDepthMarketData->AskVolume3 = -1;
+        if (pDepthMarketData->BidPrice4 == DBL_MAX) pDepthMarketData->BidPrice4 = -1;
+        if (pDepthMarketData->BidVolume4 == DBL_MAX) pDepthMarketData->BidVolume4 = -1;
+        if (pDepthMarketData->AskPrice4 == DBL_MAX) pDepthMarketData->AskPrice4 = -1;
+        if (pDepthMarketData->AskVolume4 == DBL_MAX) pDepthMarketData->AskVolume4 = -1;
+        if (pDepthMarketData->BidPrice5 == DBL_MAX) pDepthMarketData->BidPrice5 = -1;
+        if (pDepthMarketData->BidVolume5 == DBL_MAX) pDepthMarketData->BidVolume5 = -1;
+        if (pDepthMarketData->AskPrice5 == DBL_MAX) pDepthMarketData->AskPrice5 = -1;
+        if (pDepthMarketData->AskVolume5 == DBL_MAX) pDepthMarketData->AskVolume5 = -1;
+        if (pDepthMarketData->AveragePrice == DBL_MAX) pDepthMarketData->AveragePrice = -1;
         //std::cout<<"bef:"<<t_strMarketData<<std::endl;
         sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数bef:", m_hashMarketDataList.size());
         LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
@@ -317,54 +317,54 @@ void axapi::MarketQuotationAPI::OnRtnDepthMarketData(
         {
         cout << "key:" << t_iterator->first << "|" << t_iterator->second.InstrumentID << "," << t_iterator->second.LastPrice << endl;
         }*/
-        if(m_hashMarketDataList.find(pDepthMarketData->InstrumentID) != m_hashMarketDataList.end())
+        if (m_hashMarketDataList.find(pDepthMarketData->InstrumentID) != m_hashMarketDataList.end())
         {
             sprintf_s(t_strLog, "%s:%s%s %f", t_strLogFuncName, "开始赋值", pDepthMarketData->InstrumentID, pDepthMarketData->LastPrice);
             LOG4CPLUS_TRACE(m_objLogger, t_strLog);
-            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].TradingDay,     sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].TradingDay),     pDepthMarketData->TradingDay);
-            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].ActionDay,      sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].ActionDay),      pDepthMarketData->ActionDay);
-            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].InstrumentID,   sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].InstrumentID),   pDepthMarketData->InstrumentID);
-            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].ExchangeID,     sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].ExchangeID),     pDepthMarketData->ExchangeID);
+            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].TradingDay, sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].TradingDay), pDepthMarketData->TradingDay);
+            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].ActionDay, sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].ActionDay), pDepthMarketData->ActionDay);
+            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].InstrumentID, sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].InstrumentID), pDepthMarketData->InstrumentID);
+            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].ExchangeID, sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].ExchangeID), pDepthMarketData->ExchangeID);
             strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].ExchangeInstID, sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].ExchangeInstID), pDepthMarketData->ExchangeInstID);
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].PreOpenInterest      = pDepthMarketData->PreOpenInterest;   
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].PreClosePrice        = pDepthMarketData->PreClosePrice;     
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].PreSettlementPrice   = pDepthMarketData->PreSettlementPrice;
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].LastPrice            = pDepthMarketData->LastPrice;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].Volume               = pDepthMarketData->Volume;            
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].Turnover             = pDepthMarketData->Turnover;          
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].OpenInterest         = pDepthMarketData->OpenInterest;      
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].OpenPrice            = pDepthMarketData->OpenPrice;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].ClosePrice           = pDepthMarketData->ClosePrice;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].HighestPrice         = pDepthMarketData->HighestPrice;      
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].LowestPrice          = pDepthMarketData->LowestPrice;       
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].SettlementPrice      = pDepthMarketData->SettlementPrice;   
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].LowerLimitPrice      = pDepthMarketData->LowerLimitPrice;   
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].UpperLimitPrice      = pDepthMarketData->UpperLimitPrice;   
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].PreDelta             = pDepthMarketData->PreDelta;          
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].CurrDelta            = pDepthMarketData->CurrDelta;         
-            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].UpdateTime,     sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].UpdateTime),     pDepthMarketData->UpdateTime);        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].UpdateMillisec       = pDepthMarketData->UpdateMillisec;    
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice1            = pDepthMarketData->BidPrice1;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume1           = pDepthMarketData->BidVolume1;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice1            = pDepthMarketData->AskPrice1;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume1           = pDepthMarketData->AskVolume1;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice2            = pDepthMarketData->BidPrice2;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume2           = pDepthMarketData->BidVolume2;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice2            = pDepthMarketData->AskPrice2;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume2           = pDepthMarketData->AskVolume2;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice3            = pDepthMarketData->BidPrice3;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume3           = pDepthMarketData->BidVolume3;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice3            = pDepthMarketData->AskPrice3;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume3           = pDepthMarketData->AskVolume3;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice4            = pDepthMarketData->BidPrice4;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume4           = pDepthMarketData->BidVolume4;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice4            = pDepthMarketData->AskPrice4;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume4           = pDepthMarketData->AskVolume4;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice5            = pDepthMarketData->BidPrice5;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume5           = pDepthMarketData->BidVolume5;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice5            = pDepthMarketData->AskPrice5;         
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume5           = pDepthMarketData->AskVolume5;        
-            m_hashMarketDataList[pDepthMarketData->InstrumentID].AveragePrice         = pDepthMarketData->AveragePrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].PreOpenInterest = pDepthMarketData->PreOpenInterest;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].PreClosePrice = pDepthMarketData->PreClosePrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].PreSettlementPrice = pDepthMarketData->PreSettlementPrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].LastPrice = pDepthMarketData->LastPrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].Volume = pDepthMarketData->Volume;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].Turnover = pDepthMarketData->Turnover;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].OpenInterest = pDepthMarketData->OpenInterest;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].OpenPrice = pDepthMarketData->OpenPrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].ClosePrice = pDepthMarketData->ClosePrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].HighestPrice = pDepthMarketData->HighestPrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].LowestPrice = pDepthMarketData->LowestPrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].SettlementPrice = pDepthMarketData->SettlementPrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].LowerLimitPrice = pDepthMarketData->LowerLimitPrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].UpperLimitPrice = pDepthMarketData->UpperLimitPrice;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].PreDelta = pDepthMarketData->PreDelta;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].CurrDelta = pDepthMarketData->CurrDelta;
+            strcpy_s(m_hashMarketDataList[pDepthMarketData->InstrumentID].UpdateTime, sizeof(m_hashMarketDataList[pDepthMarketData->InstrumentID].UpdateTime), pDepthMarketData->UpdateTime);
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].UpdateMillisec = pDepthMarketData->UpdateMillisec;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice1 = pDepthMarketData->BidPrice1;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume1 = pDepthMarketData->BidVolume1;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice1 = pDepthMarketData->AskPrice1;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume1 = pDepthMarketData->AskVolume1;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice2 = pDepthMarketData->BidPrice2;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume2 = pDepthMarketData->BidVolume2;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice2 = pDepthMarketData->AskPrice2;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume2 = pDepthMarketData->AskVolume2;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice3 = pDepthMarketData->BidPrice3;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume3 = pDepthMarketData->BidVolume3;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice3 = pDepthMarketData->AskPrice3;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume3 = pDepthMarketData->AskVolume3;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice4 = pDepthMarketData->BidPrice4;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume4 = pDepthMarketData->BidVolume4;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice4 = pDepthMarketData->AskPrice4;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume4 = pDepthMarketData->AskVolume4;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidPrice5 = pDepthMarketData->BidPrice5;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].BidVolume5 = pDepthMarketData->BidVolume5;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskPrice5 = pDepthMarketData->AskPrice5;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AskVolume5 = pDepthMarketData->AskVolume5;
+            m_hashMarketDataList[pDepthMarketData->InstrumentID].AveragePrice = pDepthMarketData->AveragePrice;
         }
         sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数aft:", m_hashMarketDataList.size());
         LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
@@ -377,7 +377,7 @@ void axapi::MarketQuotationAPI::OnRtnDepthMarketData(
         recordKData(pDepthMarketData->InstrumentID);
 #endif KLINESTORAGE
     }
-    catch(std::exception e)
+    catch (std::exception e)
     {
         sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, e.what());
         LOG4CPLUS_FATAL(m_objLogger, t_strLog);
@@ -392,10 +392,11 @@ int axapi::MarketQuotationAPI::initializeLog()
     log4cplus::helpers::LogLog::getLogLog()->setInternalDebugging(true);
     m_root = log4cplus::Logger::getRoot();
     m_objLogger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("MarketQuotationAPI"));
-    try{
+    try {
         log4cplus::ConfigureAndWatchThread configureThread(
             LOG4CPLUS_TEXT("log4cplus.properties"), 5 * 1000);
-    }catch(std::exception e){
+    }
+    catch (std::exception e) {
         LOG4CPLUS_FATAL(m_root, "initialLog exception");
     }
     return 0;
@@ -436,7 +437,7 @@ int axapi::MarketQuotationAPI::initializeConnection(
     m_pUserApi->Init();
     WaitForSingleObject(m_hInitEvent, INFINITE);
     ResetEvent(m_hInitEvent);
-    int returncode = m_pUserApi->ReqUserLogin(&ReqUserLoginField,m_nRequestID++);
+    int returncode = m_pUserApi->ReqUserLogin(&ReqUserLoginField, m_nRequestID++);
     WaitForSingleObject(m_hInitEvent, INFINITE);
 
     /*cout << "开始订阅行情..." << endl;
@@ -503,10 +504,10 @@ void axapi::MarketQuotationAPI::initiateTradingTimeLine(char **FilenameList, int
     * 时间轴地址分配为时间轴数据量+1，下标从1开始，下标为0保存当前时间
     */
     m_TradingTimeLine = (TradingMinuteField**)malloc(sizeof(TradingMinuteField*)*TRADINGTIMELINETYPE);
-    for(int t_nTimeLineType=0;t_nTimeLineType<TRADINGTIMELINETYPE;t_nTimeLineType++)
+    for (int t_nTimeLineType = 0; t_nTimeLineType < TRADINGTIMELINETYPE; t_nTimeLineType++)
     {
-        TradingMinuteField *t_TradingTimeLine = (TradingMinuteField*)malloc(sizeof(TradingMinuteField)*(TRADINGTIMELINEMIN+1));
-        memset(t_TradingTimeLine, '\0', sizeof(TradingMinuteField)*(TRADINGTIMELINEMIN+1));
+        TradingMinuteField *t_TradingTimeLine = (TradingMinuteField*)malloc(sizeof(TradingMinuteField)*(TRADINGTIMELINEMIN + 1));
+        memset(t_TradingTimeLine, '\0', sizeof(TradingMinuteField)*(TRADINGTIMELINEMIN + 1));
         m_TradingTimeLine[t_nTimeLineType] = t_TradingTimeLine;
 
         /*
@@ -515,29 +516,29 @@ void axapi::MarketQuotationAPI::initiateTradingTimeLine(char **FilenameList, int
         std::fstream t_getTradingTimeLine;
         t_getTradingTimeLine.open("TradingMinuteLine.dat", std::ios_base::in);
         //int t_nLineCounts;
-        if(t_getTradingTimeLine.is_open())
+        if (t_getTradingTimeLine.is_open())
         {
             //t_nLineCounts = 1;
             //std::vector<std::array<char,20>> t_linetext;
             std::array<char, 20> t_text;
-            for(int t_nLineCounts = 1;!t_getTradingTimeLine.eof() && t_nLineCounts < (TRADINGTIMELINEMIN+1);t_nLineCounts++)
+            for (int t_nLineCounts = 1; !t_getTradingTimeLine.eof() && t_nLineCounts < (TRADINGTIMELINEMIN + 1); t_nLineCounts++)
             {
-                for(int i=0;i<=9;i++)
+                for (int i = 0; i <= 9; i++)
                 {
                     t_getTradingTimeLine.getline(&t_text[0], 200, ',');
-                    switch(i)
+                    switch (i)
                     {
                     case 0:
-                        {
-                            t_TradingTimeLine[t_nLineCounts].CurrentMinute    = atoi(&t_text[0]);
-                            t_TradingTimeLine[t_nLineCounts].OffsetValue      = t_nLineCounts;
-                            break;
-                        }
-                    case 1: t_TradingTimeLine[t_nLineCounts].isTradeFlag      = atoi(&t_text[0]); break;
-                    case 2: strcpy_s(t_TradingTimeLine[t_nLineCounts].TradingDay, sizeof(t_TradingTimeLine[t_nLineCounts].TradingDay), &t_text[0]);break;
-                    case 3: t_TradingTimeLine[t_nLineCounts].BarSerials_1Min  = atoi(&t_text[0]); break;
-                    case 4: t_TradingTimeLine[t_nLineCounts].BarSerials_3Min  = atoi(&t_text[0]); break;
-                    case 5: t_TradingTimeLine[t_nLineCounts].BarSerials_5Min  = atoi(&t_text[0]); break;
+                    {
+                        t_TradingTimeLine[t_nLineCounts].CurrentMinute = atoi(&t_text[0]);
+                        t_TradingTimeLine[t_nLineCounts].OffsetValue = t_nLineCounts;
+                        break;
+                    }
+                    case 1: t_TradingTimeLine[t_nLineCounts].isTradeFlag = atoi(&t_text[0]); break;
+                    case 2: strcpy_s(t_TradingTimeLine[t_nLineCounts].TradingDay, sizeof(t_TradingTimeLine[t_nLineCounts].TradingDay), &t_text[0]); break;
+                    case 3: t_TradingTimeLine[t_nLineCounts].BarSerials_1Min = atoi(&t_text[0]); break;
+                    case 4: t_TradingTimeLine[t_nLineCounts].BarSerials_3Min = atoi(&t_text[0]); break;
+                    case 5: t_TradingTimeLine[t_nLineCounts].BarSerials_5Min = atoi(&t_text[0]); break;
                     case 6: t_TradingTimeLine[t_nLineCounts].BarSerials_10Min = atoi(&t_text[0]); break;
                     case 7: t_TradingTimeLine[t_nLineCounts].BarSerials_15Min = atoi(&t_text[0]); break;
                     case 8: t_TradingTimeLine[t_nLineCounts].BarSerials_30Min = atoi(&t_text[0]); break;
@@ -559,12 +560,12 @@ void axapi::MarketQuotationAPI::initiateTradingTimeLine(char **FilenameList, int
 
 #ifdef KLINESTORAGE
 /// 订阅新合约初始化K线存储
-int axapi::MarketQuotationAPI::initialKMarketDataSingle(char *pInstrument)
+int axapi::MarketQuotationAPI::initialKMarketDataSingle(const char *pInstrument)
 {
     char *t_strLogFuncName = "axapi::MarketQuotationAPI::initialKMarketDataSingle";
     char t_strLog[500];
 
-    if(findMarketDataIndex(pInstrument)<0)
+    if (findMarketDataIndex(pInstrument) < 0)
     {
         sprintf_s(t_strLog, "%s:%s%s", t_strLogFuncName, "分配K线空间给合约", pInstrument);
         LOG4CPLUS_INFO(m_objLogger, t_strLog);
@@ -573,20 +574,20 @@ int axapi::MarketQuotationAPI::initialKMarketDataSingle(char *pInstrument)
         * K线地址分配为当日K线根数+1，K线下标从1开始，下标为0保存当前时间前所有Bar累计值
         */
         Contract t_newInstrument;
-        KMarketDataField *t_array1mKLine  = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_1MIN+1));
-        memset(t_array1mKLine,  '\0', sizeof(KMarketDataField)*(BARNUMBER_1MIN+1));
-        KMarketDataField *t_array3mKLine  = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_3MIN+1));
-        memset(t_array3mKLine,  '\0', sizeof(KMarketDataField)*(BARNUMBER_3MIN+1));
-        KMarketDataField *t_array5mKLine  = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_5MIN+1));
-        memset(t_array5mKLine,  '\0', sizeof(KMarketDataField)*(BARNUMBER_5MIN+1));
-        KMarketDataField *t_array10mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_10MIN+1));
-        memset(t_array10mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_10MIN+1));
-        KMarketDataField *t_array15mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_15MIN+1));
-        memset(t_array15mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_15MIN+1));
-        KMarketDataField *t_array30mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_30MIN+1));
-        memset(t_array30mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_30MIN+1));
-        KMarketDataField *t_array60mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_60MIN+1));
-        memset(t_array60mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_60MIN+1));
+        KMarketDataField *t_array1mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_1MIN + 1));
+        memset(t_array1mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_1MIN + 1));
+        KMarketDataField *t_array3mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_3MIN + 1));
+        memset(t_array3mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_3MIN + 1));
+        KMarketDataField *t_array5mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_5MIN + 1));
+        memset(t_array5mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_5MIN + 1));
+        KMarketDataField *t_array10mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_10MIN + 1));
+        memset(t_array10mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_10MIN + 1));
+        KMarketDataField *t_array15mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_15MIN + 1));
+        memset(t_array15mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_15MIN + 1));
+        KMarketDataField *t_array30mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_30MIN + 1));
+        memset(t_array30mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_30MIN + 1));
+        KMarketDataField *t_array60mKLine = (KMarketDataField*)malloc(sizeof(KMarketDataField)*(BARNUMBER_60MIN + 1));
+        memset(t_array60mKLine, '\0', sizeof(KMarketDataField)*(BARNUMBER_60MIN + 1));
         strcpy_s(t_newInstrument.InstrumentID, sizeof(APINamespace TThostFtdcInstrumentIDType), pInstrument);
         m_arrayContracts.push_back(t_newInstrument);
         m_array1mKLine.push_back(t_array1mKLine);
@@ -596,180 +597,180 @@ int axapi::MarketQuotationAPI::initialKMarketDataSingle(char *pInstrument)
         m_array15mKLine.push_back(t_array15mKLine);
         m_array30mKLine.push_back(t_array30mKLine);
         m_array60mKLine.push_back(t_array60mKLine);
-        for(int i=0;i<(BARNUMBER_1MIN+1);i++)
+        for (int i = 0; i < (BARNUMBER_1MIN + 1); i++)
         {
             strcpy_s(t_array1mKLine[i].TradingDay, sizeof(t_array1mKLine[i].TradingDay), "20181022");
             strcpy_s(t_array1mKLine[i].Contract, sizeof(t_array1mKLine[i].Contract), pInstrument);
-            t_array1mKLine[i].BarSerials    = i;
+            t_array1mKLine[i].BarSerials = i;
             t_array1mKLine[i].SecondsPeriod = 1;
-            t_array1mKLine[i].OpenPrice     = 0;
-            t_array1mKLine[i].ClosePrice    = 0;
-            t_array1mKLine[i].HighestPrice  = 0;
-            t_array1mKLine[i].LowestPrice   = 0;
-            switch(i)
+            t_array1mKLine[i].OpenPrice = 0;
+            t_array1mKLine[i].ClosePrice = 0;
+            t_array1mKLine[i].HighestPrice = 0;
+            t_array1mKLine[i].LowestPrice = 0;
+            switch (i)
             {
             case 0:
-                {
-                    t_array1mKLine[i].begintime     = 0;
-                    t_array1mKLine[i].endtime       = 0;
-                    break;
-                }
+            {
+                t_array1mKLine[i].begintime = 0;
+                t_array1mKLine[i].endtime = 0;
+                break;
+            }
             default:
-                {
-                    t_array1mKLine[i].begintime     = FIRSTSECOND + i * 60 * 1;
-                    t_array1mKLine[i].endtime       = FIRSTSECOND + i * 60 * (1 * 2 - 1) + 59;
-                    break;
-                }
+            {
+                t_array1mKLine[i].begintime = FIRSTSECOND + i * 60 * 1;
+                t_array1mKLine[i].endtime = FIRSTSECOND + i * 60 * (1 * 2 - 1) + 59;
+                break;
+            }
             }
         }
-        for(int i=0;i<(BARNUMBER_3MIN+1);i++)
+        for (int i = 0; i < (BARNUMBER_3MIN + 1); i++)
         {
             strcpy_s(t_array3mKLine[i].Contract, sizeof(t_array3mKLine[i].Contract), pInstrument);
-            t_array3mKLine[i].BarSerials    = i;
+            t_array3mKLine[i].BarSerials = i;
             t_array3mKLine[i].SecondsPeriod = 3;
-            t_array3mKLine[i].OpenPrice     = 0;
-            t_array3mKLine[i].ClosePrice    = 0;
-            t_array3mKLine[i].HighestPrice  = 0;
-            t_array3mKLine[i].LowestPrice   = 0;
-            switch(i)
+            t_array3mKLine[i].OpenPrice = 0;
+            t_array3mKLine[i].ClosePrice = 0;
+            t_array3mKLine[i].HighestPrice = 0;
+            t_array3mKLine[i].LowestPrice = 0;
+            switch (i)
             {
             case 0:
-                {
-                    t_array1mKLine[i].begintime     = 0;
-                    t_array1mKLine[i].endtime       = 0;
-                    break;
-                }
+            {
+                t_array1mKLine[i].begintime = 0;
+                t_array1mKLine[i].endtime = 0;
+                break;
+            }
             default:
-                {
-                    t_array3mKLine[i].begintime     = FIRSTSECOND + i * 60 * 3;
-                    t_array3mKLine[i].endtime       = FIRSTSECOND + i * 60 * (3 * 2 - 1) + 59;
-                    break;
-                }
+            {
+                t_array3mKLine[i].begintime = FIRSTSECOND + i * 60 * 3;
+                t_array3mKLine[i].endtime = FIRSTSECOND + i * 60 * (3 * 2 - 1) + 59;
+                break;
+            }
             }
         }
-        for(int i=0;i<(BARNUMBER_5MIN+1);i++)
+        for (int i = 0; i < (BARNUMBER_5MIN + 1); i++)
         {
             strcpy_s(t_array5mKLine[i].Contract, sizeof(t_array5mKLine[i].Contract), pInstrument);
-            t_array5mKLine[i].BarSerials    = i;
+            t_array5mKLine[i].BarSerials = i;
             t_array5mKLine[i].SecondsPeriod = 5;
-            t_array5mKLine[i].OpenPrice     = 0;
-            t_array5mKLine[i].ClosePrice    = 0;
-            t_array5mKLine[i].HighestPrice  = 0;
-            t_array5mKLine[i].LowestPrice   = 0;
-            switch(i)
+            t_array5mKLine[i].OpenPrice = 0;
+            t_array5mKLine[i].ClosePrice = 0;
+            t_array5mKLine[i].HighestPrice = 0;
+            t_array5mKLine[i].LowestPrice = 0;
+            switch (i)
             {
             case 0:
-                {
-                    t_array1mKLine[i].begintime     = 0;
-                    t_array1mKLine[i].endtime       = 0;
-                    break;
-                }
+            {
+                t_array1mKLine[i].begintime = 0;
+                t_array1mKLine[i].endtime = 0;
+                break;
+            }
             default:
-                {
-                    t_array5mKLine[i].begintime     = FIRSTSECOND + i * 60 * 5;
-                    t_array5mKLine[i].endtime       = FIRSTSECOND + i * 60 * (5 * 2 - 1) + 59;
-                    break;
-                }
+            {
+                t_array5mKLine[i].begintime = FIRSTSECOND + i * 60 * 5;
+                t_array5mKLine[i].endtime = FIRSTSECOND + i * 60 * (5 * 2 - 1) + 59;
+                break;
+            }
             }
         }
-        for(int i=0;i<(BARNUMBER_10MIN+1);i++)
+        for (int i = 0; i < (BARNUMBER_10MIN + 1); i++)
         {
             strcpy_s(t_array10mKLine[i].Contract, sizeof(t_array10mKLine[i].Contract), pInstrument);
-            t_array10mKLine[i].BarSerials    = i;
+            t_array10mKLine[i].BarSerials = i;
             t_array10mKLine[i].SecondsPeriod = 10;
-            t_array10mKLine[i].OpenPrice     = 0;
-            t_array10mKLine[i].ClosePrice    = 0;
-            t_array10mKLine[i].HighestPrice  = 0;
-            t_array10mKLine[i].LowestPrice   = 0;
-            switch(i)
+            t_array10mKLine[i].OpenPrice = 0;
+            t_array10mKLine[i].ClosePrice = 0;
+            t_array10mKLine[i].HighestPrice = 0;
+            t_array10mKLine[i].LowestPrice = 0;
+            switch (i)
             {
             case 0:
-                {
-                    t_array1mKLine[i].begintime     = 0;
-                    t_array1mKLine[i].endtime       = 0;
-                    break;
-                }
+            {
+                t_array1mKLine[i].begintime = 0;
+                t_array1mKLine[i].endtime = 0;
+                break;
+            }
             default:
-                {
-                    t_array10mKLine[i].begintime     = FIRSTSECOND + i * 60 * 10;
-                    t_array10mKLine[i].endtime       = FIRSTSECOND + i * 60 * (10 * 2 - 1) + 59;
-                    break;
-                }
+            {
+                t_array10mKLine[i].begintime = FIRSTSECOND + i * 60 * 10;
+                t_array10mKLine[i].endtime = FIRSTSECOND + i * 60 * (10 * 2 - 1) + 59;
+                break;
+            }
             }
         }
-        for(int i=0;i<(BARNUMBER_15MIN+1);i++)
+        for (int i = 0; i < (BARNUMBER_15MIN + 1); i++)
         {
             strcpy_s(t_array15mKLine[i].Contract, sizeof(t_array15mKLine[i].Contract), pInstrument);
-            t_array15mKLine[i].BarSerials    = i;
+            t_array15mKLine[i].BarSerials = i;
             t_array15mKLine[i].SecondsPeriod = 15;
-            t_array15mKLine[i].OpenPrice     = 0;
-            t_array15mKLine[i].ClosePrice    = 0;
-            t_array15mKLine[i].HighestPrice  = 0;
-            t_array15mKLine[i].LowestPrice   = 0;
-            switch(i)
+            t_array15mKLine[i].OpenPrice = 0;
+            t_array15mKLine[i].ClosePrice = 0;
+            t_array15mKLine[i].HighestPrice = 0;
+            t_array15mKLine[i].LowestPrice = 0;
+            switch (i)
             {
             case 0:
-                {
-                    t_array1mKLine[i].begintime     = 0;
-                    t_array1mKLine[i].endtime       = 0;
-                    break;
-                }
+            {
+                t_array1mKLine[i].begintime = 0;
+                t_array1mKLine[i].endtime = 0;
+                break;
+            }
             default:
-                {
-                    t_array15mKLine[i].begintime     = FIRSTSECOND + i * 60 * 15;
-                    t_array15mKLine[i].endtime       = FIRSTSECOND + i * 60 * (15 * 2 - 1) + 59;
-                    break;
-                }
+            {
+                t_array15mKLine[i].begintime = FIRSTSECOND + i * 60 * 15;
+                t_array15mKLine[i].endtime = FIRSTSECOND + i * 60 * (15 * 2 - 1) + 59;
+                break;
+            }
             }
         }
-        for(int i=0;i<(BARNUMBER_30MIN+1);i++)
+        for (int i = 0; i < (BARNUMBER_30MIN + 1); i++)
         {
             strcpy_s(t_array30mKLine[i].Contract, sizeof(t_array30mKLine[i].Contract), pInstrument);
-            t_array30mKLine[i].BarSerials    = i;
+            t_array30mKLine[i].BarSerials = i;
             t_array30mKLine[i].SecondsPeriod = 30;
-            t_array30mKLine[i].OpenPrice     = 0;
-            t_array30mKLine[i].ClosePrice    = 0;
-            t_array30mKLine[i].HighestPrice  = 0;
-            t_array30mKLine[i].LowestPrice   = 0;
-            switch(i)
+            t_array30mKLine[i].OpenPrice = 0;
+            t_array30mKLine[i].ClosePrice = 0;
+            t_array30mKLine[i].HighestPrice = 0;
+            t_array30mKLine[i].LowestPrice = 0;
+            switch (i)
             {
             case 0:
-                {
-                    t_array1mKLine[i].begintime     = 0;
-                    t_array1mKLine[i].endtime       = 0;
-                    break;
-                }
+            {
+                t_array1mKLine[i].begintime = 0;
+                t_array1mKLine[i].endtime = 0;
+                break;
+            }
             default:
-                {
-                    t_array30mKLine[i].begintime     = FIRSTSECOND + i * 60 * 30;
-                    t_array30mKLine[i].endtime       = FIRSTSECOND + i * 60 * (30 * 2 - 1) + 59;
-                    break;
-                }
+            {
+                t_array30mKLine[i].begintime = FIRSTSECOND + i * 60 * 30;
+                t_array30mKLine[i].endtime = FIRSTSECOND + i * 60 * (30 * 2 - 1) + 59;
+                break;
+            }
             }
         }
-        for(int i=0;i<(BARNUMBER_60MIN+1);i++)
+        for (int i = 0; i < (BARNUMBER_60MIN + 1); i++)
         {
             strcpy_s(t_array60mKLine[i].Contract, sizeof(t_array60mKLine[i].Contract), pInstrument);
-            t_array60mKLine[i].BarSerials    = i;
+            t_array60mKLine[i].BarSerials = i;
             t_array60mKLine[i].SecondsPeriod = 60;
-            t_array60mKLine[i].OpenPrice     = 0;
-            t_array60mKLine[i].ClosePrice    = 0;
-            t_array60mKLine[i].HighestPrice  = 0;
-            t_array60mKLine[i].LowestPrice   = 0;
-            switch(i)
+            t_array60mKLine[i].OpenPrice = 0;
+            t_array60mKLine[i].ClosePrice = 0;
+            t_array60mKLine[i].HighestPrice = 0;
+            t_array60mKLine[i].LowestPrice = 0;
+            switch (i)
             {
             case 0:
-                {
-                    t_array1mKLine[i].begintime     = 0;
-                    t_array1mKLine[i].endtime       = 0;
-                    break;
-                }
+            {
+                t_array1mKLine[i].begintime = 0;
+                t_array1mKLine[i].endtime = 0;
+                break;
+            }
             default:
-                {
-                    t_array60mKLine[i].begintime     = FIRSTSECOND + i * 60 * 60;
-                    t_array60mKLine[i].endtime       = FIRSTSECOND + i * 60 * (60 * 2 - 1) + 59;
-                    break;
-                }
+            {
+                t_array60mKLine[i].begintime = FIRSTSECOND + i * 60 * 60;
+                t_array60mKLine[i].endtime = FIRSTSECOND + i * 60 * (60 * 2 - 1) + 59;
+                break;
+            }
             }
         }
     }
@@ -779,11 +780,11 @@ int axapi::MarketQuotationAPI::initialKMarketDataSingle(char *pInstrument)
 
 #ifdef KLINESTORAGE
 /// 查找合约是否已订阅，并获取到合约数据索引号
-int axapi::MarketQuotationAPI::findMarketDataIndex(char *pInstrument)
+int axapi::MarketQuotationAPI::findMarketDataIndex(const char *pInstrument)
 {
-    for(unsigned int i=0;i<m_arrayContracts.size();i++)
+    for (unsigned int i = 0; i < m_arrayContracts.size(); i++)
     {
-        if(strcmp(pInstrument, m_arrayContracts[i].InstrumentID) == 0)
+        if (strcmp(pInstrument, m_arrayContracts[i].InstrumentID) == 0)
         {
             return i;
         }
@@ -796,29 +797,29 @@ int axapi::MarketQuotationAPI::findMarketDataIndex(char *pInstrument)
 /// 查找合约是否已订阅，并获取到合约数据索引号
 int axapi::MarketQuotationAPI::findCurrentTradingTimeLineOffset()
 {
-    int t_nCurrentMinute = floor(getLocalTime()/60);
+    int t_nCurrentMinute = floor(getLocalTime() / 60);
     /// 获得品种对应时间轴,不同品种对应不同时间轴
     int t_iTimeLineTypeIndex = 0;
     /*
     * 如果当前时间轴偏移量已经被检索过则直接使用下标0的缓存数据，如果没有检索过则检索生成缓存数据
     */
-    if(m_TradingTimeLine[t_iTimeLineTypeIndex][0].CurrentMinute == t_nCurrentMinute)
+    if (m_TradingTimeLine[t_iTimeLineTypeIndex][0].CurrentMinute == t_nCurrentMinute)
     {
         return m_TradingTimeLine[t_iTimeLineTypeIndex][0].OffsetValue;
     }
     else
     {
-        for(int i=1;i<TRADINGTIMELINEMIN+1;i++)
+        for (int i = 1; i < TRADINGTIMELINEMIN + 1; i++)
         {
-            if(m_TradingTimeLine[t_iTimeLineTypeIndex][i].CurrentMinute == t_nCurrentMinute)
+            if (m_TradingTimeLine[t_iTimeLineTypeIndex][i].CurrentMinute == t_nCurrentMinute)
             {
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].CurrentMinute    = m_TradingTimeLine[t_iTimeLineTypeIndex][i].CurrentMinute;
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].OffsetValue      = m_TradingTimeLine[t_iTimeLineTypeIndex][i].OffsetValue;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].CurrentMinute = m_TradingTimeLine[t_iTimeLineTypeIndex][i].CurrentMinute;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].OffsetValue = m_TradingTimeLine[t_iTimeLineTypeIndex][i].OffsetValue;
                 strcpy_s(m_TradingTimeLine[t_iTimeLineTypeIndex][0].TradingDay, sizeof(m_TradingTimeLine[t_iTimeLineTypeIndex][0].TradingDay), m_TradingTimeLine[t_iTimeLineTypeIndex][i].TradingDay);
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].isTradeFlag      = m_TradingTimeLine[t_iTimeLineTypeIndex][i].isTradeFlag;
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_1Min  = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_1Min;
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_3Min  = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_3Min;
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_5Min  = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_5Min;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].isTradeFlag = m_TradingTimeLine[t_iTimeLineTypeIndex][i].isTradeFlag;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_1Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_1Min;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_3Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_3Min;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_5Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_5Min;
                 m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_10Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_10Min;
                 m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_15Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_15Min;
                 m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_30Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_30Min;
@@ -832,32 +833,32 @@ int axapi::MarketQuotationAPI::findCurrentTradingTimeLineOffset()
 #endif KLINESTORAGE
 
 #ifdef KLINESTORAGE
-/// 查找合约是否已订阅，并获取到合约数据索引号
-int axapi::MarketQuotationAPI::findCurrentTradingTimeLineOffset(char *pInstrument)
+/// 查找当前时间是否属于指定合约交易时间内以及时间轴上位置
+int axapi::MarketQuotationAPI::findCurrentTradingTimeLineOffset(const char *pInstrument)
 {
-    int t_nCurrentMinute = floor(getLocalTime()/60);
+    int t_nCurrentMinute = floor(getLocalTime() / 60);
     /// 获得品种对应时间轴,不同品种对应不同时间轴
     int t_iTimeLineTypeIndex = 0;
     /*
     * 如果当前时间轴偏移量已经被检索过则直接使用下标0的缓存数据，如果没有检索过则检索生成缓存数据
     */
-    if(m_TradingTimeLine[t_iTimeLineTypeIndex][0].CurrentMinute == t_nCurrentMinute)
+    if (m_TradingTimeLine[t_iTimeLineTypeIndex][0].CurrentMinute == t_nCurrentMinute)
     {
         return m_TradingTimeLine[t_iTimeLineTypeIndex][0].OffsetValue;
     }
     else
     {
-        for(int i=1;i<TRADINGTIMELINEMIN+1;i++)
+        for (int i = 1; i < TRADINGTIMELINEMIN + 1; i++)
         {
-            if(m_TradingTimeLine[t_iTimeLineTypeIndex][i].CurrentMinute == t_nCurrentMinute)
+            if (m_TradingTimeLine[t_iTimeLineTypeIndex][i].CurrentMinute == t_nCurrentMinute)
             {
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].CurrentMinute    = m_TradingTimeLine[t_iTimeLineTypeIndex][i].CurrentMinute;
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].OffsetValue      = m_TradingTimeLine[t_iTimeLineTypeIndex][i].OffsetValue;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].CurrentMinute = m_TradingTimeLine[t_iTimeLineTypeIndex][i].CurrentMinute;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].OffsetValue = m_TradingTimeLine[t_iTimeLineTypeIndex][i].OffsetValue;
                 strcpy_s(m_TradingTimeLine[t_iTimeLineTypeIndex][0].TradingDay, sizeof(m_TradingTimeLine[t_iTimeLineTypeIndex][0].TradingDay), m_TradingTimeLine[t_iTimeLineTypeIndex][i].TradingDay);
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].isTradeFlag      = m_TradingTimeLine[t_iTimeLineTypeIndex][i].isTradeFlag;
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_1Min  = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_1Min;
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_3Min  = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_3Min;
-                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_5Min  = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_5Min;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].isTradeFlag = m_TradingTimeLine[t_iTimeLineTypeIndex][i].isTradeFlag;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_1Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_1Min;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_3Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_3Min;
+                m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_5Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_5Min;
                 m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_10Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_10Min;
                 m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_15Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_15Min;
                 m_TradingTimeLine[t_iTimeLineTypeIndex][0].BarSerials_30Min = m_TradingTimeLine[t_iTimeLineTypeIndex][i].BarSerials_30Min;
@@ -872,7 +873,7 @@ int axapi::MarketQuotationAPI::findCurrentTradingTimeLineOffset(char *pInstrumen
 
 #ifdef KLINESTORAGE
 /// 记录K线数据
-void axapi::MarketQuotationAPI::recordKData(char *pInstrument)
+void axapi::MarketQuotationAPI::recordKData(const char *pInstrument)
 {
     char *t_strLogFuncName = "axapi::MarketQuotationAPI::recordKData";
     char t_strLog[500];
@@ -885,14 +886,14 @@ void axapi::MarketQuotationAPI::recordKData(char *pInstrument)
     int t_iInstrumentIndex = findMarketDataIndex(pInstrument);
     //std::cout << "t_iInstrumentIndex:" << t_iInstrumentIndex << std::endl;
     /// 未找到合约存储索引则停止
-    if(t_iInstrumentIndex >= 0)
+    if (t_iInstrumentIndex >= 0)
     {
         /// 获取当前时间存储位置索引
         int t_iTimeLineindex = findCurrentTradingTimeLineOffset(pInstrument);
         //std::cout << "t_iTimeLineindex:" << t_iTimeLineindex << std::endl;
 
         /// 未找到时间索引则停止
-        if(t_iTimeLineindex >= 0)
+        if (t_iTimeLineindex >= 0)
         {
             /*
             * 获得1分钟K线偏移量，记录K线数据
@@ -903,67 +904,67 @@ void axapi::MarketQuotationAPI::recordKData(char *pInstrument)
             /*
             * 保存行情累积值,K线切换时计算,切换标志为当前BAR.closeprice为0,切换后closeprice被lastprice刷新
             */
-            if((m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->ClosePrice == 0)
+            if ((m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->ClosePrice == 0)
             {
                 // 高开低收为上条BAR的值
-                (m_array1mKLine[t_iInstrumentIndex]+0)->OpenPrice     = (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->OpenPrice;
+                (m_array1mKLine[t_iInstrumentIndex] + 0)->OpenPrice = (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset - 1)->OpenPrice;
                 //(m_array1mKLine[t_iInstrumentIndex]+0)->OpenPrice==0?(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->OpenPrice:(m_array1mKLine[t_iInstrumentIndex]+0)->OpenPrice;
-                (m_array1mKLine[t_iInstrumentIndex]+0)->HighestPrice  = (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->HighestPrice;
+                (m_array1mKLine[t_iInstrumentIndex] + 0)->HighestPrice = (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset - 1)->HighestPrice;
                 //(m_array1mKLine[t_iInstrumentIndex]+0)->HighestPrice>(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->HighestPrice?(m_array1mKLine[t_iInstrumentIndex]+0)->HighestPrice:(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->HighestPrice;
-                (m_array1mKLine[t_iInstrumentIndex]+0)->LowestPrice   = (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->LowestPrice;
+                (m_array1mKLine[t_iInstrumentIndex] + 0)->LowestPrice = (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset - 1)->LowestPrice;
                 //(m_array1mKLine[t_iInstrumentIndex]+0)->LowestPrice <(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->LowestPrice ?(m_array1mKLine[t_iInstrumentIndex]+0)->LowestPrice :(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->LowestPrice;
-                (m_array1mKLine[t_iInstrumentIndex]+0)->ClosePrice    = (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->ClosePrice;
+                (m_array1mKLine[t_iInstrumentIndex] + 0)->ClosePrice = (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset - 1)->ClosePrice;
                 //(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->ClosePrice;
                 // 累积之前所有BAR时的成交量
-                (m_array1mKLine[t_iInstrumentIndex]+0)->Volume       += (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->Volume;
+                (m_array1mKLine[t_iInstrumentIndex] + 0)->Volume += (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset - 1)->Volume;
                 // 累积之前所有BAR时的成交量
-                (m_array1mKLine[t_iInstrumentIndex]+0)->Turnover     += (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->Turnover;
+                (m_array1mKLine[t_iInstrumentIndex] + 0)->Turnover += (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset - 1)->Turnover;
             }
             /*
             * 保存对应K线BAR
             * 当天第一条无法取上一条BAR的值，需要特殊处理
             */
             // 如果当前BAR.openprice为0，则需要赋值，用上一条BAR.closeprice或者用当天的开盘价
-            if((m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->OpenPrice == 0)
+            if ((m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->OpenPrice == 0)
             {
-                switch(t_i1MinOffset)
+                switch (t_i1MinOffset)
                 {
                     // 如果为第一根BAR，则openprice为当天行情开盘价，该数据在当前行情数据中
-                case 1:(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->OpenPrice = m_hashMarketDataList[pInstrument].OpenPrice;
+                case 1:(m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->OpenPrice = m_hashMarketDataList[pInstrument].OpenPrice;
                     break;
                     /*
                     * 如果为其他BAR，则用上一条BAR的收盘价作为开盘价
                     * 但如果BAR记录不全，即前面缺失，则用当天开盘价作为openprice
                     */
-                default:(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->OpenPrice
-                            = (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->ClosePrice==0?m_hashMarketDataList[pInstrument].OpenPrice:(m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset-1)->ClosePrice;
+                default:(m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->OpenPrice
+                    = (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset - 1)->ClosePrice == 0 ? m_hashMarketDataList[pInstrument].OpenPrice : (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset - 1)->ClosePrice;
                     break;
                 }
             }
             // 如果当前BAR.HighestPrice为0，则用当前最新价赋值，否则判断是否小于最新价，小于则替换
-            if((m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->HighestPrice == 0)
+            if ((m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->HighestPrice == 0)
             {
-                (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->HighestPrice = m_hashMarketDataList[pInstrument].LastPrice;
+                (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->HighestPrice = m_hashMarketDataList[pInstrument].LastPrice;
             }
-            else if((m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->HighestPrice < m_hashMarketDataList[pInstrument].LastPrice)
+            else if ((m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->HighestPrice < m_hashMarketDataList[pInstrument].LastPrice)
             {
-                (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->HighestPrice = m_hashMarketDataList[pInstrument].LastPrice;
+                (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->HighestPrice = m_hashMarketDataList[pInstrument].LastPrice;
             }
             // 如果当前BAR.LowestPrice为0，则用当前最新价赋值，否则判断是否大于最新价，大于则替换
-            if((m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->LowestPrice == 0)
+            if ((m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->LowestPrice == 0)
             {
-                (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->LowestPrice = m_hashMarketDataList[pInstrument].LastPrice;
+                (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->LowestPrice = m_hashMarketDataList[pInstrument].LastPrice;
             }
-            else if((m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->LowestPrice > m_hashMarketDataList[pInstrument].LastPrice)
+            else if ((m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->LowestPrice > m_hashMarketDataList[pInstrument].LastPrice)
             {
-                (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->LowestPrice = m_hashMarketDataList[pInstrument].LastPrice;
+                (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->LowestPrice = m_hashMarketDataList[pInstrument].LastPrice;
             }
             // 持续更新收盘价为当前价
-            (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->ClosePrice = m_hashMarketDataList[pInstrument].LastPrice;
+            (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->ClosePrice = m_hashMarketDataList[pInstrument].LastPrice;
             // 当前K线成交量=当前行情内累积成交量-BAR[0]中保存的上条K线累积成交量
-            (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->Volume     = m_hashMarketDataList[pInstrument].Volume   - (m_array1mKLine[t_iInstrumentIndex]+0)->Volume;
+            (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->Volume = m_hashMarketDataList[pInstrument].Volume - (m_array1mKLine[t_iInstrumentIndex] + 0)->Volume;
             // 当前K线成交额=当前行情内累积成交额-BAR[0]中保存的上条K线累积成交额
-            (m_array1mKLine[t_iInstrumentIndex]+t_i1MinOffset)->Turnover   = m_hashMarketDataList[pInstrument].Turnover - (m_array1mKLine[t_iInstrumentIndex]+0)->Turnover;
+            (m_array1mKLine[t_iInstrumentIndex] + t_i1MinOffset)->Turnover = m_hashMarketDataList[pInstrument].Turnover - (m_array1mKLine[t_iInstrumentIndex] + 0)->Turnover;
             /*std::cout << "  " << t_iInstrumentIndex << "," << 0 << ":" << (m_array1mKLine[t_iInstrumentIndex]+0)->TradingDay << ','
             << (m_array1mKLine[t_iInstrumentIndex]+0)->Contract << ','
             << (m_array1mKLine[t_iInstrumentIndex]+0)->SecondsPeriod << ','
@@ -1000,63 +1001,63 @@ void axapi::MarketQuotationAPI::recordKData(char *pInstrument)
             /*
             * 保存行情累积值,K线切换时计算,切换标志为当前BAR.closeprice为0,切换后closeprice被lastprice刷新
             */
-            if((m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->ClosePrice == 0)
+            if ((m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->ClosePrice == 0)
             {
                 // 高开低收为上条BAR的值
-                (m_array3mKLine[t_iInstrumentIndex]+0)->OpenPrice     = (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset-1)->OpenPrice;
-                (m_array3mKLine[t_iInstrumentIndex]+0)->HighestPrice  = (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset-1)->HighestPrice;
-                (m_array3mKLine[t_iInstrumentIndex]+0)->LowestPrice   = (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset-1)->LowestPrice;
-                (m_array3mKLine[t_iInstrumentIndex]+0)->ClosePrice    = (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset-1)->ClosePrice;
+                (m_array3mKLine[t_iInstrumentIndex] + 0)->OpenPrice = (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset - 1)->OpenPrice;
+                (m_array3mKLine[t_iInstrumentIndex] + 0)->HighestPrice = (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset - 1)->HighestPrice;
+                (m_array3mKLine[t_iInstrumentIndex] + 0)->LowestPrice = (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset - 1)->LowestPrice;
+                (m_array3mKLine[t_iInstrumentIndex] + 0)->ClosePrice = (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset - 1)->ClosePrice;
                 // 累积之前所有BAR时的成交量
-                (m_array3mKLine[t_iInstrumentIndex]+0)->Volume       += (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset-1)->Volume;
+                (m_array3mKLine[t_iInstrumentIndex] + 0)->Volume += (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset - 1)->Volume;
                 // 累积之前所有BAR时的成交量
-                (m_array3mKLine[t_iInstrumentIndex]+0)->Turnover     += (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset-1)->Turnover;
+                (m_array3mKLine[t_iInstrumentIndex] + 0)->Turnover += (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset - 1)->Turnover;
             }
             /*
             * 保存对应K线BAR
             * 当天第一条无法取上一条BAR的值，需要特殊处理
             */
             // 如果当前BAR.openprice为0，则需要赋值，用上一条BAR.closeprice或者用当天的开盘价
-            if((m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->OpenPrice == 0)
+            if ((m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->OpenPrice == 0)
             {
-                switch(t_i3MinOffset)
+                switch (t_i3MinOffset)
                 {
                     // 如果为第一根BAR，则openprice为当天行情开盘价，该数据在当前行情数据中
-                case 1:(m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->OpenPrice = m_hashMarketDataList[pInstrument].OpenPrice;
+                case 1:(m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->OpenPrice = m_hashMarketDataList[pInstrument].OpenPrice;
                     break;
                     /*
                     * 如果为其他BAR，则用上一条BAR的收盘价作为开盘价
                     * 但如果BAR记录不全，即前面缺失，则用当天开盘价作为openprice
                     */
-                default:(m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->OpenPrice
-                            = (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset-1)->ClosePrice==0?m_hashMarketDataList[pInstrument].OpenPrice:(m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset-1)->ClosePrice;
+                default:(m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->OpenPrice
+                    = (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset - 1)->ClosePrice == 0 ? m_hashMarketDataList[pInstrument].OpenPrice : (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset - 1)->ClosePrice;
                     break;
                 }
             }
             // 如果当前BAR.HighestPrice为0，则用当前最新价赋值，否则判断是否小于最新价，小于则替换
-            if((m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->HighestPrice == 0)
+            if ((m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->HighestPrice == 0)
             {
-                (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->HighestPrice = m_hashMarketDataList[pInstrument].LastPrice;
+                (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->HighestPrice = m_hashMarketDataList[pInstrument].LastPrice;
             }
-            else if((m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->HighestPrice < m_hashMarketDataList[pInstrument].LastPrice)
+            else if ((m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->HighestPrice < m_hashMarketDataList[pInstrument].LastPrice)
             {
-                (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->HighestPrice = m_hashMarketDataList[pInstrument].LastPrice;
+                (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->HighestPrice = m_hashMarketDataList[pInstrument].LastPrice;
             }
             // 如果当前BAR.LowestPrice为0，则用当前最新价赋值，否则判断是否大于最新价，大于则替换
-            if((m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->LowestPrice == 0)
+            if ((m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->LowestPrice == 0)
             {
-                (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->LowestPrice = m_hashMarketDataList[pInstrument].LastPrice;
+                (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->LowestPrice = m_hashMarketDataList[pInstrument].LastPrice;
             }
-            else if((m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->LowestPrice > m_hashMarketDataList[pInstrument].LastPrice)
+            else if ((m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->LowestPrice > m_hashMarketDataList[pInstrument].LastPrice)
             {
-                (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->LowestPrice = m_hashMarketDataList[pInstrument].LastPrice;
+                (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->LowestPrice = m_hashMarketDataList[pInstrument].LastPrice;
             }
             // 持续更新收盘价为当前价
-            (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->ClosePrice = m_hashMarketDataList[pInstrument].LastPrice;
+            (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->ClosePrice = m_hashMarketDataList[pInstrument].LastPrice;
             // 当前K线成交量=当前行情内累积成交量-BAR[0]中保存的上条K线累积成交量
-            (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->Volume     = m_hashMarketDataList[pInstrument].Volume   - (m_array3mKLine[t_iInstrumentIndex]+0)->Volume;
+            (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->Volume = m_hashMarketDataList[pInstrument].Volume - (m_array3mKLine[t_iInstrumentIndex] + 0)->Volume;
             // 当前K线成交额=当前行情内累积成交额-BAR[0]中保存的上条K线累积成交额
-            (m_array3mKLine[t_iInstrumentIndex]+t_i3MinOffset)->Turnover   = m_hashMarketDataList[pInstrument].Turnover - (m_array3mKLine[t_iInstrumentIndex]+0)->Turnover;
+            (m_array3mKLine[t_iInstrumentIndex] + t_i3MinOffset)->Turnover = m_hashMarketDataList[pInstrument].Turnover - (m_array3mKLine[t_iInstrumentIndex] + 0)->Turnover;
 #pragma endregion KBar3m
             /*
             * 获得5分钟K线偏移量，记录K线数据
@@ -1117,9 +1118,9 @@ void axapi::MarketQuotationAPI::subMarketData(char *pInstrumentList[], int in_nI
     sprintf_s(t_strLog, "%s:%s%d%s", t_strLogFuncName, "开始订阅", in_nInstrumentCount, "个合约的行情");
     LOG4CPLUS_INFO(m_objLogger, t_strLog);
 
-    while(true)
+    while (true)
     {
-        if (m_pUserApi->SubscribeMarketData(pInstrumentList,503) == 0)
+        if (m_pUserApi->SubscribeMarketData(pInstrumentList, 503) == 0)
         {
             sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, "行情订阅成功");
             LOG4CPLUS_INFO(m_objLogger, t_strLog);
@@ -1133,10 +1134,10 @@ int axapi::MarketQuotationAPI::subMarketDataSingle(char *in_strInstrument)
 {
     char *t_strLogFuncName = "MarketDataAPI_CTP::subMarketDataSingle";
     char t_strLog[500];
-    sprintf_s(t_strLog, "%s:%s%s%s", t_strLogFuncName, "开始订阅合约", in_strInstrument,"的行情");
+    sprintf_s(t_strLog, "%s:%s%s%s", t_strLogFuncName, "开始订阅合约", in_strInstrument, "的行情");
     LOG4CPLUS_INFO(m_objLogger, t_strLog);
 
-    if(m_hashMarketDataList.find(in_strInstrument) == m_hashMarketDataList.end())
+    if (m_hashMarketDataList.find(in_strInstrument) == m_hashMarketDataList.end())
     {
         struct MarketDataField t_MarketDataField;
         memset(&t_MarketDataField, '\0', sizeof(MarketDataField));
@@ -1154,7 +1155,7 @@ int axapi::MarketQuotationAPI::subMarketDataSingle(char *in_strInstrument)
         char **t_InstrumentList = new char*[1];
         t_InstrumentList[0] = in_strInstrument;
 
-        if (m_pUserApi->SubscribeMarketData(t_InstrumentList,1) == 0)
+        if (m_pUserApi->SubscribeMarketData(t_InstrumentList, 1) == 0)
         {
             sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, "行情订阅成功");
             LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
@@ -1176,7 +1177,7 @@ int axapi::MarketQuotationAPI::subMarketDataSingle(char *in_strInstrument)
 }
 
 /// 得到指定合约的行情
-double axapi::MarketQuotationAPI::getCurrPrice(char *in_strInstrument)
+double axapi::MarketQuotationAPI::getCurrPrice(const char *in_strInstrument)
 {
     char *t_strLogFuncName = "axapi::MarketQuotationAPI::getCurrPrice";
     char t_strLog[500];
@@ -1184,7 +1185,7 @@ double axapi::MarketQuotationAPI::getCurrPrice(char *in_strInstrument)
     sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数:", m_hashMarketDataList.size());
     LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
 
-    if(m_hashMarketDataList.find(in_strInstrument) != m_hashMarketDataList.end())
+    if (m_hashMarketDataList.find(in_strInstrument) != m_hashMarketDataList.end())
     {
         sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, "找到请求行情合约");
         LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
@@ -1194,7 +1195,7 @@ double axapi::MarketQuotationAPI::getCurrPrice(char *in_strInstrument)
 }
 
 /// 得到指定合约的行情
-axapi::MarketDataField *axapi::MarketQuotationAPI::getCurrentPrice(char *in_strInstrument)
+axapi::MarketDataField *axapi::MarketQuotationAPI::getCurrentPrice(const char *in_strInstrument)
 {
     char *t_strLogFuncName = "axapi::MarketQuotationAPI::getCurrentPrice";
     char t_strLog[500];
@@ -1202,7 +1203,7 @@ axapi::MarketDataField *axapi::MarketQuotationAPI::getCurrentPrice(char *in_strI
     sprintf_s(t_strLog, "%s:%s%zd", t_strLogFuncName, "m_hashMarketDataList当前含有用户数:", m_hashMarketDataList.size());
     LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
 
-    if(m_hashMarketDataList.find(in_strInstrument) != m_hashMarketDataList.end())
+    if (m_hashMarketDataList.find(in_strInstrument) != m_hashMarketDataList.end())
     {
         sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, "找到请求行情合约");
         LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
@@ -1212,8 +1213,8 @@ axapi::MarketDataField *axapi::MarketQuotationAPI::getCurrentPrice(char *in_strI
 }
 
 #ifdef KLINESTORAGE
-/// 得到K线数据,默认得到当前K线
-axapi::KMarketDataField *axapi::MarketQuotationAPI::getKLine(char *in_strInstrument, int in_iSecondsPeriod, int in_iCurrentOffset)
+///得到指定合约的K线数据, 指定与最新K线的偏移量, 默认得到最新的1分钟K线数据
+axapi::KMarketDataField *axapi::MarketQuotationAPI::getKLine(const char *in_strInstrument, int in_iSecondsPeriod, int in_iCurrentOffset)
 {
     /// 获得品种对应时间轴,不同品种对应不同时间轴
     int t_iTimeLineTypeIndex = 0;
@@ -1221,13 +1222,13 @@ axapi::KMarketDataField *axapi::MarketQuotationAPI::getKLine(char *in_strInstrum
     int t_iTimeLineindex = findCurrentTradingTimeLineOffset(in_strInstrument);
     /// 获得当前合约存储位置索引
     int t_iInstrumentIndex = findMarketDataIndex(in_strInstrument);
-    if(t_iInstrumentIndex<0 || t_iTimeLineindex<=0)
+    if (t_iInstrumentIndex < 0 || t_iTimeLineindex <= 0)
     {
         return NULL;
     }
 
     int t_iNMinOffset;
-    switch(in_iSecondsPeriod)
+    switch (in_iSecondsPeriod)
     {
     case 1:  t_iNMinOffset = m_TradingTimeLine[t_iTimeLineTypeIndex][t_iTimeLineindex].BarSerials_1Min; break;
     case 3:  t_iNMinOffset = m_TradingTimeLine[t_iTimeLineTypeIndex][t_iTimeLineindex].BarSerials_3Min; break;
@@ -1239,14 +1240,46 @@ axapi::KMarketDataField *axapi::MarketQuotationAPI::getKLine(char *in_strInstrum
     default: return NULL;
     }
     //std::cout << "t_iNMinOffset:" << t_iNMinOffset<< std::endl;
-    if(t_iNMinOffset + in_iCurrentOffset > 0)
+    if (t_iNMinOffset + in_iCurrentOffset > 0)
     {
-        return m_array1mKLine[t_iInstrumentIndex]+t_iNMinOffset + in_iCurrentOffset;
+        return m_array1mKLine[t_iInstrumentIndex] + t_iNMinOffset + in_iCurrentOffset;
     }
     else
     {
         return NULL;
     }
+}
+#endif KLINESTORAGE
+
+#ifdef KLINESTORAGE
+/// 得到指定合约的K线数据,指定所处当天K线的位置,默认得到第一分钟的1分钟K线数据
+axapi::KMarketDataField *axapi::MarketQuotationAPI::getKLineBySerials(const char *in_strInstrument, int in_iSecondsPeriod, int in_iPosition)
+{
+    /// 获得品种对应时间轴,不同品种对应不同时间轴
+    int t_iTimeLineTypeIndex = 0;
+    /// 获得所要K线的最大BARS数量
+    int t_iTimeLineMaxIndex = 0;
+    switch (in_iSecondsPeriod)
+    {
+    case 1:  t_iTimeLineMaxIndex = BARNUMBER_1MIN; break;
+    case 3:  t_iTimeLineMaxIndex = BARNUMBER_3MIN; break;
+    case 5:  t_iTimeLineMaxIndex = BARNUMBER_5MIN; break;
+    case 10: t_iTimeLineMaxIndex = BARNUMBER_10MIN; break;
+    case 15: t_iTimeLineMaxIndex = BARNUMBER_15MIN; break;
+    case 30: t_iTimeLineMaxIndex = BARNUMBER_30MIN; break;
+    case 60: t_iTimeLineMaxIndex = BARNUMBER_60MIN; break;
+    default: return NULL;
+    }
+    /// 获得当前合约存储位置索引
+    int t_iInstrumentIndex = findMarketDataIndex(in_strInstrument);
+
+    if (t_iInstrumentIndex < 0 || t_iTimeLineMaxIndex <= in_iPosition || in_iPosition <= 0)
+    {
+        return NULL;
+    }
+
+    //std::cout << "t_iNMinOffset:" << t_iNMinOffset<< std::endl;
+    return m_array1mKLine[t_iInstrumentIndex] + in_iPosition;
 }
 #endif KLINESTORAGE
 
@@ -1271,7 +1304,7 @@ void axapi::MarketQuotationAPI::setAPIStatus(APIStatus in_nAPIStatus)
 /// 判断传入时间是否大于指定交易所时间
 bool axapi::MarketQuotationAPI::overTime(char *in_strExchName, tm *in_ptime)
 {
-    if(getExchangeTime(in_strExchName) > (in_ptime->tm_hour*3600 + in_ptime->tm_min*60 + in_ptime->tm_sec))
+    if (getExchangeTime(in_strExchName) > (in_ptime->tm_hour * 3600 + in_ptime->tm_min * 60 + in_ptime->tm_sec))
     {
         return true;
     }
@@ -1287,7 +1320,7 @@ double axapi::MarketQuotationAPI::getLocalTime()
     time_t nowtime = time(NULL);
     tm *strnowtime;
     strnowtime = localtime(&nowtime); //获取当前时间
-    return (strnowtime->tm_hour)*60*60 + (strnowtime->tm_min)*60+ (strnowtime->tm_sec);
+    return (strnowtime->tm_hour) * 60 * 60 + (strnowtime->tm_min) * 60 + (strnowtime->tm_sec);
 }
 
 /// 通过交易所名字获取到交易所时间（本地时间+/-交易所时间差）
@@ -1328,34 +1361,34 @@ double axapi::MarketQuotationAPI::getTimebyFormat(char *in_strtime)
     {
         memset(t_ntime, '\0', sizeof(t_ntime));
 
-        while(true)
+        while (true)
         {
-            if(in_strtime[t_strlength] < '0' || in_strtime[t_strlength] > '9')
+            if (in_strtime[t_strlength] < '0' || in_strtime[t_strlength] > '9')
             {
                 return -200;
             }
             else
             {
-                for(int i=0;i<3;i++)
+                for (int i = 0; i < 3; i++)
                 {
-                    if(t_ntime[i] == '\0')
+                    if (t_ntime[i] == '\0')
                     {
                         t_ntime[i] = in_strtime[t_strlength];
                         break;
                     }
                 }
             }
-            if(in_strtime[t_strlength] == ':')
+            if (in_strtime[t_strlength] == ':')
             {
                 t_delimscount++;
                 t_dbtime += atoi(t_ntime)*t_multiply;
                 t_multiply /= 60;
                 memset(t_ntime, '\0', sizeof(t_ntime));
             }
-            if(in_strtime[t_strlength] == '\0')
+            if (in_strtime[t_strlength] == '\0')
             {
                 t_strlength++;
-                if(t_strlength > 9)
+                if (t_strlength > 9)
                 {
                     return -300;
                 }
@@ -1364,10 +1397,10 @@ double axapi::MarketQuotationAPI::getTimebyFormat(char *in_strtime)
             }
             t_strlength++;
         }
-        if(t_delimscount != 2)
+        if (t_delimscount != 2)
             return -100;
     }
-    catch(std::exception e)
+    catch (std::exception e)
     {
         return -400;
     }
@@ -1392,7 +1425,7 @@ void axapi::MarketQuotationAPI::writeHQData(APINamespace CThostFtdcDepthMarketDa
 {
     char *t_strLogFuncName = "axapi::MarketQuotationAPI::writeHQData";
     char t_strLog[500];
-    try{
+    try {
         char t_strMarketData[2000];
         sprintf_s(t_strMarketData, 1999, "%s,%s,%s,%s,\
                                    %s,%s,%d,\
@@ -1407,21 +1440,21 @@ void axapi::MarketQuotationAPI::writeHQData(APINamespace CThostFtdcDepthMarketDa
                                    %lf,%d,%lf,%d,\
                                    %lf,%d,%lf,%d,\
                                    ",
-                                   pDepthMarketData->TradingDay, pDepthMarketData->ExchangeID, pDepthMarketData->ExchangeInstID, pDepthMarketData->InstrumentID,
-                                   pDepthMarketData->ActionDay, pDepthMarketData->UpdateTime, pDepthMarketData->UpdateMillisec,
-                                   pDepthMarketData->OpenPrice, pDepthMarketData->HighestPrice, pDepthMarketData->LowestPrice, pDepthMarketData->ClosePrice,
-                                   pDepthMarketData->LastPrice, pDepthMarketData->Volume, pDepthMarketData->Turnover,
-                                   pDepthMarketData->UpperLimitPrice, pDepthMarketData->LowerLimitPrice,
-                                   pDepthMarketData->AveragePrice, pDepthMarketData->SettlementPrice, pDepthMarketData->CurrDelta, pDepthMarketData->OpenInterest,
-                                   pDepthMarketData->PreSettlementPrice,  pDepthMarketData->PreClosePrice,  pDepthMarketData->PreOpenInterest,  pDepthMarketData->PreDelta,
-                                   pDepthMarketData->BidPrice1, pDepthMarketData->BidVolume1, pDepthMarketData->AskPrice1, pDepthMarketData->AskVolume1,
-                                   pDepthMarketData->BidPrice2, pDepthMarketData->BidVolume2, pDepthMarketData->AskPrice2, pDepthMarketData->AskVolume2,
-                                   pDepthMarketData->BidPrice3, pDepthMarketData->BidVolume3, pDepthMarketData->AskPrice3, pDepthMarketData->AskVolume3,
-                                   pDepthMarketData->BidPrice4, pDepthMarketData->BidVolume4, pDepthMarketData->AskPrice4, pDepthMarketData->AskVolume4,
-                                   pDepthMarketData->BidPrice5, pDepthMarketData->BidVolume5, pDepthMarketData->AskPrice5, pDepthMarketData->AskVolume5
-                                   );
+            pDepthMarketData->TradingDay, pDepthMarketData->ExchangeID, pDepthMarketData->ExchangeInstID, pDepthMarketData->InstrumentID,
+            pDepthMarketData->ActionDay, pDepthMarketData->UpdateTime, pDepthMarketData->UpdateMillisec,
+            pDepthMarketData->OpenPrice, pDepthMarketData->HighestPrice, pDepthMarketData->LowestPrice, pDepthMarketData->ClosePrice,
+            pDepthMarketData->LastPrice, pDepthMarketData->Volume, pDepthMarketData->Turnover,
+            pDepthMarketData->UpperLimitPrice, pDepthMarketData->LowerLimitPrice,
+            pDepthMarketData->AveragePrice, pDepthMarketData->SettlementPrice, pDepthMarketData->CurrDelta, pDepthMarketData->OpenInterest,
+            pDepthMarketData->PreSettlementPrice, pDepthMarketData->PreClosePrice, pDepthMarketData->PreOpenInterest, pDepthMarketData->PreDelta,
+            pDepthMarketData->BidPrice1, pDepthMarketData->BidVolume1, pDepthMarketData->AskPrice1, pDepthMarketData->AskVolume1,
+            pDepthMarketData->BidPrice2, pDepthMarketData->BidVolume2, pDepthMarketData->AskPrice2, pDepthMarketData->AskVolume2,
+            pDepthMarketData->BidPrice3, pDepthMarketData->BidVolume3, pDepthMarketData->AskPrice3, pDepthMarketData->AskVolume3,
+            pDepthMarketData->BidPrice4, pDepthMarketData->BidVolume4, pDepthMarketData->AskPrice4, pDepthMarketData->AskVolume4,
+            pDepthMarketData->BidPrice5, pDepthMarketData->BidVolume5, pDepthMarketData->AskPrice5, pDepthMarketData->AskVolume5
+        );
 #ifdef HQDATAFILE
-        if(m_pHQDataIntoFiles != NULL)
+        if (m_pHQDataIntoFiles != NULL)
         {
             m_pHQDataIntoFiles->writeData2File(t_strMarketData);
             sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, "实时行情写入文件正常");
@@ -1438,8 +1471,8 @@ void axapi::MarketQuotationAPI::writeHQData(APINamespace CThostFtdcDepthMarketDa
     {
         sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, e.what());
         LOG4CPLUS_WARN(m_objLogger, t_strLog);
+        }
     }
-}
 
 #ifdef KDATAFILE
 /// 初始化实时行情写文件组件
@@ -1463,22 +1496,22 @@ void axapi::MarketQuotationAPI::writeKBarData()
     try
     {
         int t_iTimeLineTypeIndex = 0;
-        for(unsigned int i=0; i<m_arrayContracts.size(); i++)
+        for (unsigned int i = 0; i < m_arrayContracts.size(); i++)
         {
             int t_iTimeLineindex = findCurrentTradingTimeLineOffset(m_arrayContracts[i].InstrumentID);
-            KMarketDataField *t_pKMarketDataField = m_array1mKLine[i]+m_TradingTimeLine[t_iTimeLineTypeIndex][t_iTimeLineindex].BarSerials_1Min;
+            KMarketDataField *t_pKMarketDataField = m_array1mKLine[i] + m_TradingTimeLine[t_iTimeLineTypeIndex][t_iTimeLineindex].BarSerials_1Min;
             char t_strKMarketData[500];
             sprintf_s(t_strKMarketData, "%s,%s,%d,\
                                         %d,%ld,%ld,\
                                         %lf,%lf,%lf,%lf,\
                                         %lf,%lf",
-                                        t_pKMarketDataField->TradingDay, t_pKMarketDataField->Contract, t_pKMarketDataField->SecondsPeriod,
-                                        t_pKMarketDataField->BarSerials, t_pKMarketDataField->begintime, t_pKMarketDataField->endtime,
-                                        t_pKMarketDataField->OpenPrice, t_pKMarketDataField->HighestPrice, t_pKMarketDataField->LowestPrice, t_pKMarketDataField->ClosePrice,
-                                        t_pKMarketDataField->Turnover, t_pKMarketDataField->Volume
-                                        );
+                t_pKMarketDataField->TradingDay, t_pKMarketDataField->Contract, t_pKMarketDataField->SecondsPeriod,
+                t_pKMarketDataField->BarSerials, t_pKMarketDataField->begintime, t_pKMarketDataField->endtime,
+                t_pKMarketDataField->OpenPrice, t_pKMarketDataField->HighestPrice, t_pKMarketDataField->LowestPrice, t_pKMarketDataField->ClosePrice,
+                t_pKMarketDataField->Turnover, t_pKMarketDataField->Volume
+            );
 #ifdef KDATAFILE
-            if(m_pKBarDataIntoFiles != NULL)
+            if (m_pKBarDataIntoFiles != NULL)
             {
                 m_pKBarDataIntoFiles->writeData2File(t_strKMarketData);
                 sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, "KBar写入文件正常");
@@ -1496,6 +1529,6 @@ void axapi::MarketQuotationAPI::writeKBarData()
     {
         sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, e.what());
         LOG4CPLUS_WARN(m_objLogger, t_strLog);
-    }
-}
+            }
+        }
 #endif KLINESTORAGE
