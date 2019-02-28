@@ -244,18 +244,22 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
 {
     try
     {
-        //用于获取时间
+        // 用于获取时间
         time_t nowtime;
         tm *curtime;
         int curMinutes, t_TradeInfoTime;
         char t_TradeInfoHour[3];
         char t_TradeInfoMinutes[3];
         char t_TradeInfoSeconds[3];
-        //是否下平仓单标志
+        // 合约最小变动价位
+        //APINamespace CThostFtdcInstrumentField t_objInstrumentInfo;
+        // 当前合约行情
+        //axapi::MarketDataField t_objCurrentPrice;
+        // 是否下平仓单标志
         bool t_offsetAction = false;
-        //平仓单类型
+        // 平仓单类型
         char t_offsettype[10] = "";
-        //下单开平标志,交易所对于平今指令不同
+        // 下单开平标志,交易所对于平今指令不同
         int t_offsetflag;
 
         while (g_blOffsetFlag)
@@ -277,7 +281,7 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     {
                         continue;
                     }
-                    // 如果为平仓行情则跳过
+                    // 如果为平仓记录则跳过
                     if (t_objTradeInfo.apiTradeField.OffsetFlag != THOST_FTDC_OF_Open)
                     {
                         continue;
@@ -300,6 +304,13 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     * 3.止盈平仓
                     */
 #pragma region
+                    /*
+                    * 准备策略参数
+                    * 1.当前时间
+                    * 2.当前行情
+                    * 3.合约最小变动价位
+                    */
+                    /// 准备当前时间参数
                     nowtime = time(NULL);
                     curtime = localtime(&nowtime);
                     t_TradeInfoHour[0] = t_objTradeInfo.apiTradeField.TradeTime[0];
@@ -327,12 +338,14 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     LOG4CPLUS_DEBUG(g_objLogger_DEBUG, g_strLog);
                     sprintf_s(g_strLog, "curMinutes:%d,t_TradeInfoTime:%d", curMinutes, t_TradeInfoTime);
                     LOG4CPLUS_DEBUG(g_objLogger_DEBUG, g_strLog);
+                    /// 准备当前行情价
+                    /// 准备当前合约最小变动价位
 
                     // 达到盈利阀值最大回撤比例止盈
                     if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && (t_currentPrice->LastPrice - t_objTradeInfo.Price) >= g_nProfitFallOffsetValve)
+                        && (t_currentPrice->LastPrice - t_objTradeInfo.Price) >= g_nProfitFallOffsetValve * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick)
                         || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                            && (t_currentPrice->LastPrice - t_objTradeInfo.apiTradeField.Price) * (-1) >= g_nProfitFallOffsetValve))
+                            && (t_currentPrice->LastPrice - t_objTradeInfo.apiTradeField.Price) * (-1) >= g_nProfitFallOffsetValve * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick))
                     {
                         if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
                             && t_currentPrice->LastPrice <= t_objTradeInfo.Price - (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * g_dbProfitFallRate)
