@@ -24,6 +24,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\MarketQuotationIndex.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MarketQuotationIndex.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C2E74993-103D-4AF7-82E9-61E85502BD9E}</ProjectGuid>

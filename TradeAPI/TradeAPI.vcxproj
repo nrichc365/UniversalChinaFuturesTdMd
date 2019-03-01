@@ -158,6 +158,10 @@
   <ItemGroup>
     <ClInclude Include="..\src\TradeAPI.h" />
     <ClInclude Include="..\src\TradeAPITypeDefine.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TradeAPI.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -252,9 +252,9 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
         char t_TradeInfoMinutes[3];
         char t_TradeInfoSeconds[3];
         // 合约最小变动价位
-        //APINamespace CThostFtdcInstrumentField t_objInstrumentInfo;
+        APINamespace CThostFtdcInstrumentField t_objInstrumentInfo;
         // 当前合约行情
-        //axapi::MarketDataField t_objCurrentPrice;
+        axapi::MarketDataField t_objCurrentPrice;
         // 是否下平仓单标志
         bool t_offsetAction = false;
         // 平仓单类型
@@ -281,6 +281,10 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     {
                         continue;
                     }
+                    else
+                    {
+                        memcpy_s(&t_objCurrentPrice, sizeof(t_objCurrentPrice), t_currentPrice, sizeof(t_objCurrentPrice));
+                    }
                     // 如果为平仓记录则跳过
                     if (t_objTradeInfo.apiTradeField.OffsetFlag != THOST_FTDC_OF_Open)
                     {
@@ -289,12 +293,12 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
 
                     // 更新最高价
                     if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && t_objTradeInfo.Price < t_currentPrice->LastPrice)
+                        && t_objTradeInfo.Price < t_objCurrentPrice.LastPrice)
                         || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                            && t_objTradeInfo.Price > t_currentPrice->LastPrice))
+                            && t_objTradeInfo.Price > t_objCurrentPrice.LastPrice))
                     {
-                        t_tradeapi->setTradeInfo(i, "Price", t_currentPrice->LastPrice);
-                        t_objTradeInfo.Price = t_currentPrice->LastPrice;
+                        t_tradeapi->setTradeInfo(i, "Price", t_objCurrentPrice.LastPrice);
+                        t_objTradeInfo.Price = t_objCurrentPrice.LastPrice;
                     }
                     /*
                     * 是否强平
@@ -338,19 +342,20 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     LOG4CPLUS_DEBUG(g_objLogger_DEBUG, g_strLog);
                     sprintf_s(g_strLog, "curMinutes:%d,t_TradeInfoTime:%d", curMinutes, t_TradeInfoTime);
                     LOG4CPLUS_DEBUG(g_objLogger_DEBUG, g_strLog);
-                    /// 准备当前行情价
+                    /// 准备当前行情价 已准备
                     /// 准备当前合约最小变动价位
+                    memcpy_s(&t_objInstrumentInfo, sizeof(t_objInstrumentInfo), &t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID), sizeof(t_objInstrumentInfo));
 
                     // 达到盈利阀值最大回撤比例止盈
                     if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && (t_currentPrice->LastPrice - t_objTradeInfo.Price) >= g_nProfitFallOffsetValve * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick)
+                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.Price) >= g_nProfitFallOffsetValve * t_objInstrumentInfo.PriceTick)
                         || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                            && (t_currentPrice->LastPrice - t_objTradeInfo.apiTradeField.Price) * (-1) >= g_nProfitFallOffsetValve * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick))
+                            && (t_objCurrentPrice.LastPrice - t_objTradeInfo.apiTradeField.Price) * (-1) >= g_nProfitFallOffsetValve * t_objInstrumentInfo.PriceTick))
                     {
                         if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                            && t_currentPrice->LastPrice <= t_objTradeInfo.Price - (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * g_dbProfitFallRate)
+                            && t_objCurrentPrice.LastPrice <= t_objTradeInfo.Price - (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * g_dbProfitFallRate)
                             || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                                && t_currentPrice->LastPrice >= t_objTradeInfo.Price + (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * (-1) * g_dbProfitFallRate))
+                                && t_objCurrentPrice.LastPrice >= t_objTradeInfo.Price + (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * (-1) * g_dbProfitFallRate))
                         {
                             sprintf_s(t_offsettype, 9, "prffal");
                             t_offsetAction = true;
@@ -364,16 +369,16 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     }
                     // 多单止损平仓
                     else if (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && (t_currentPrice->LastPrice - t_objTradeInfo.Price)
-                        <= (-1) * g_nOffsetPriceDiff * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick)
+                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.Price)
+                        <= (-1) * g_nOffsetPriceDiff * t_objInstrumentInfo.PriceTick)
                     {
                         sprintf_s(t_offsettype, 9, "byprsout");
                         t_offsetAction = true;
                     }
                     // 空单止损平仓
                     else if (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                        && (t_currentPrice->LastPrice - t_objTradeInfo.Price)
-                        >= g_nOffsetPriceDiff * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick)
+                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.Price)
+                        >= g_nOffsetPriceDiff * t_objInstrumentInfo.PriceTick)
                     {
                         sprintf_s(t_offsettype, 9, "slprsout");
                         t_offsetAction = true;
@@ -381,8 +386,8 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     // 多单止盈平仓 g_nOffsetPriceDiff2=0 无止盈平仓动作
                     else if (g_nOffsetPriceDiff2 > 0
                         && t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && (t_currentPrice->LastPrice - t_objTradeInfo.apiTradeField.Price)
-                        >= g_nOffsetPriceDiff2 * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick)
+                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.apiTradeField.Price)
+                        >= g_nOffsetPriceDiff2 * t_objInstrumentInfo.PriceTick)
                     {
                         sprintf_s(t_offsettype, 9, "bwprsout");
                         t_offsetAction = true;
@@ -390,8 +395,8 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     // 空单止盈平仓 g_nOffsetPriceDiff2=0 无止盈平仓动作
                     else if (g_nOffsetPriceDiff2 > 0
                         && t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                        && (t_currentPrice->LastPrice - t_objTradeInfo.apiTradeField.Price)
-                        <= (-1) * g_nOffsetPriceDiff2 * t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID).PriceTick)
+                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.apiTradeField.Price)
+                        <= (-1) * g_nOffsetPriceDiff2 * t_objInstrumentInfo.PriceTick)
                     {
                         sprintf_s(t_offsettype, 9, "swprsout");
                         t_offsetAction = true;

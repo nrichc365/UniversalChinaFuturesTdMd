@@ -30,6 +30,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "strategy1210", "executableA
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDJ", "index\KDJ\KDJ.vcxproj", "{9F92C58F-BC47-4541-9074-EBF3FFFA41CC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C2E74993-103D-4AF7-82E9-61E85502BD9E} = {C2E74993-103D-4AF7-82E9-61E85502BD9E}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MarketQuotationIndex", "MarketQuotationIndex\MarketQuotationIndex.vcxproj", "{C2E74993-103D-4AF7-82E9-61E85502BD9E}"
 	ProjectSection(ProjectDependencies) = postProject
