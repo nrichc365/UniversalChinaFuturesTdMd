@@ -15,16 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\MQI_RelativeStrengthIndex.h">
+    <ClCompile Include="..\..\src\MQI_MACDIndex.cpp">
       <Filter>头文件</Filter>
-    </ClInclude>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MQI_MACDIndex_main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\MQI_RelativeStrengthIndex_main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\MQI_RelativeStrengthIndex.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
+    <ClInclude Include="..\..\src\MQI_MACDIndex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-#include "MQI_KDJRandomIndex.h"
+#include "MQI_MACDIndex.h"
 #include <iostream>
 
 void main(void)
@@ -7,13 +7,13 @@ void main(void)
     axapi::MarketQuotationAPI *t_pMarketQuotation = new axapi::MarketQuotationAPI("4580", "8000500200", "800050", "tcp://10.6.7.196:21213");
     t_pMarketQuotation->subMarketDataSingle("rb1905");
 
-    axapi::MQI_KDJRandomIndex *t_pMQI_KDJRandomIndex = new axapi::MQI_KDJRandomIndex();
-    t_pMQI_KDJRandomIndex->initialize(t_pMarketQuotation, 7, "rb1905");
+    axapi::MQI_MACDIndex *t_pMQI_MACDIndex = new axapi::MQI_MACDIndex();
+    t_pMQI_MACDIndex->initialize(t_pMarketQuotation, 7, "rb1905");
 
     double t_dbIndexValue = NULL;
     for (int i = 0; i <= 5; i++)
     {
-        t_dbIndexValue = t_pMQI_KDJRandomIndex->getIndexValue();
+        t_dbIndexValue = t_pMQI_MACDIndex->getIndexValue();
         if (t_dbIndexValue == NULL)
         {
             std::cout << "no index value" << std::endl;
@@ -25,10 +25,10 @@ void main(void)
         Sleep(3000);
     }
 
-    //t_pMQI_KDJRandomIndex->initialize(t_pMarketQuotation, 4, "rb1907");
+    //t_pMQI_MACDIndex->initialize(t_pMarketQuotation, 4, "rb1907");
     for (int i = 0; i <= 5; i++)
     {
-        t_dbIndexValue = t_pMQI_KDJRandomIndex->getIndexValue();
+        t_dbIndexValue = t_pMQI_MACDIndex->getIndexValue();
         if (t_dbIndexValue == NULL)
         {
             std::cout << "no index value" << std::endl;

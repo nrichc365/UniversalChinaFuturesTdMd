@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\MQI_RelativeStrengthIndex.h">
+    <ClInclude Include="TradeAPI_HC.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\MQI_RelativeStrengthIndex_main.cpp">
+    <ClCompile Include="TradeAPI_HC.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\MQI_RelativeStrengthIndex.cpp">
+    <ClCompile Include="..\src\TradeAPI_HC_main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

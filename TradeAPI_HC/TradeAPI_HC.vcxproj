@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9F92C58F-BC47-4541-9074-EBF3FFFA41CC}</ProjectGuid>
+    <ProjectGuid>{8C947FB0-7736-43D2-8D3F-4061DA0AF11D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>KDJ</RootNamespace>
+    <RootNamespace>TradeAPI_HC</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -95,7 +95,6 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;$(SolutionDir)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>MarketQuotationIndex.lib;MarketQuotationAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -149,11 +148,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\MQI_KDJRandomIndex.cpp" />
-    <ClCompile Include="..\..\src\MQI_KDJRandomIndex_main.cpp" />
+    <ClInclude Include="TradeAPI_HC.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\MQI_KDJRandomIndex.h" />
+    <ClCompile Include="..\src\TradeAPI_HC_main.cpp" />
+    <ClCompile Include="TradeAPI_HC.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -152,7 +152,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\MarketQuotationIndex.h" />
     <ClInclude Include="..\..\src\MQI_RelativeStrengthIndex.h" />
   </ItemGroup>
   <ItemGroup>

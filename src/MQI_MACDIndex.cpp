@@ -1,35 +1,100 @@
-#define MQI_RELATIVESTRENGTHINDEX_EXE
-#include "MQI_RelativeStrengthIndex.h"
+#define MQI_MACDINDEX_EXE
+#include "MQI_MACDIndex.h"
 #include <iostream>
 #include <thread>
 
-axapi::MQI_RelativeStrengthIndex::MQI_RelativeStrengthIndex()
+axapi::MQI_MACDIndex::MQI_MACDIndex()
 {
-    char* t_strLogFuncName = "MQI_RelativeStrengthIndex::MQI_RelativeStrengthIndex";
+    char* t_strLogFuncName = "MQI_MACDIndex::MQI_MACDIndex";
     char t_strLog[500];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
     //LOG4CPLUS_TRACE(m_objLogger, t_strLog);
 }
 
-axapi::MQI_RelativeStrengthIndex::~MQI_RelativeStrengthIndex()
+axapi::MQI_MACDIndex::~MQI_MACDIndex()
 {
-    char* t_strLogFuncName = "MQI_RelativeStrengthIndex::MQI_RelativeStrengthIndex";
+    char* t_strLogFuncName = "MQI_MACDIndex::MQI_MACDIndex";
     char t_strLog[500];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
     //LOG4CPLUS_TRACE(m_objLogger, t_strLog);
+}
+
+int axapi::MQI_MACDIndex::initialize(axapi::MarketQuotationAPI *in_pMarketQuotationAPI,
+    unsigned int in_n1mKBars4EMA1, unsigned int in_n1mKBars4EMA2, unsigned int in_n1mKBars4DEA, std::string in_strContract)
+{
+    char* t_strLogFuncName = "MarketQuotationIndex::initialize";
+    char t_strLog[500];
+    sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
+    //LOG4CPLUS_TRACE(m_objLogger, t_strLog);
+
+    if (m_blAutoRun == true)
+    {
+        m_blAutoRun = false;
+        WaitForSingleObject(m_hCaculateRuning, INFINITE);
+    }
+    /// 传入参数错误则返回错误
+    if (in_pMarketQuotationAPI == NULL || in_n1mKBars4EMA1 <= 0 || in_n1mKBars4EMA2 <= 0 || in_n1mKBars4DEA <= 0 || in_strContract.size() == 0)
+    {
+        return -100;
+    }
+    else
+    {
+        m_pMarketQuotation = in_pMarketQuotationAPI;
+        m_n1mKBars = 0;
+        m_n1mKBars4EMA1 = in_n1mKBars4EMA1;
+        m_n1mKBars4EMA2 = in_n1mKBars4EMA2;
+        m_n1mKBars4DEA = in_n1mKBars4DEA;
+        m_strContract = in_strContract;
+        m_arrayIndexValue.clear();
+    }
+
+    /*
+    * 新线程计算指标值
+    */
+    /// 订阅行情
+    APINamespace TThostFtdcInstrumentIDType t_chContract;
+    memset(t_chContract, '\0', sizeof(t_chContract));
+    if (m_strContract.size() >= sizeof(t_chContract))
+    {
+        return -300;
+    }
+    else
+    {
+        m_strContract.copy(t_chContract, m_strContract.size());
+        if (in_pMarketQuotationAPI->subMarketDataSingle(t_chContract) < 0)
+        {
+            return -200;
+        }
+    }
+
+
+
+    m_blAutoRun = true;
+    std::thread autorun(&MarketQuotationIndex::caculate, this);
+    autorun.detach();
+    return 0;
 }
 
 /*
-*相对强弱指数（RSI）是通过比较一段时期内的平均收盘涨数和平均收盘跌数来分析市场买沽盘的意向和实力，从而作出未来市场的走势。
-计算方法
-N日RS=[A÷B]×100%
-公式中，A——N日内收盘涨幅之和
-B——N日内收盘跌幅之和(取正值)
-N日RSI=A/（A+B）×100
+* Moving Average Convergence / Divergence
+以EMA1的参数为12日EMA2的参数为26日，DIF的参数为9日为例来看看MACD的计算过程
+1、计算移动平均值（EMA）
+12日EMA的算式为
+EMA（12）=前一日EMA（12）×11/13+今日收盘价×2/13
+26日EMA的算式为
+EMA（26）=前一日EMA（26）×25/27+今日收盘价×2/27
+2、计算离差值（DIF）
+DIF=今日EMA（12）－今日EMA（26）
+3、计算DIF的9日EMA
+根据离差值计算其9日的EMA，即离差平均值，是所求的MACD值。为了不与指标原名相混淆，此值又名
+DEA或DEM。
+今日DEA（MACD）=前一日DEA×8/10+今日DIF×2/10。
+计算出的DIF和DEA的数值均为正值或负值。
+用（DIF-DEA）×2即为MACD柱状图。
 */
-void axapi::MQI_RelativeStrengthIndex::caculate()
+void axapi::MQI_MACDIndex::caculate()
 {
-    char* t_strLogFuncName = "MQI_RelativeStrengthIndex::caculate";
+    char* t_strLogFuncName = "MQI_MACDIndex::caculate";
     char t_strLog[500];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
     //LOG4CPLUS_TRACE(m_objLogger, t_strLog);
@@ -40,10 +105,8 @@ void axapi::MQI_RelativeStrengthIndex::caculate()
     /*
     * 自定义指标计算部分
     */
-    double t_ClosePriceSUM_Ascend = 0;
-    double t_ClosePriceSUM_Descend = 0;
-    double t_ClosePrice = 0;
-    MQI_RelativeStrengthIndexField t_objLatestIndexValue;
+    double t_EMAValue1, t_EMAValue2, t_DIFValue, tDEAValue;
+    MQI_MACDIndexField t_objLatestIndexValue;
     t_objLatestIndexValue.BarSerials = NULL;
     t_objLatestIndexValue.indexValue = NULL;
 
@@ -52,7 +115,7 @@ void axapi::MQI_RelativeStrengthIndex::caculate()
 
     while (m_blAutoRun)
     {
-        sprintf_s(t_strLog, 500, "%s:RSI caculating%s...", t_strLogFuncName, t_strContract.c_str());
+        sprintf_s(t_strLog, 500, "%s:MACD caculating%s...", t_strLogFuncName, t_strContract.c_str());
         //LOG4CPLUS_TRACE(m_objLogger, t_strLog);
 
         t_pMarketDataFieldLastest = m_pMarketQuotation->getKLine(t_strContract.c_str(), 1, 0);
@@ -108,13 +171,13 @@ void axapi::MQI_RelativeStrengthIndex::caculate()
     }
 
     SetEvent(m_hCaculateRuning);
-    sprintf_s(t_strLog, 500, "%s:RSI exit caculate%s", t_strLogFuncName, t_strContract.c_str());
+    sprintf_s(t_strLog, 500, "%s:MACD exit caculate%s", t_strLogFuncName, t_strContract.c_str());
     //LOG4CPLUS_TRACE(m_objLogger, t_strLog);
 }
 
-double axapi::MQI_RelativeStrengthIndex::getIndexValue(int in_iCurrentOffset)
+double axapi::MQI_MACDIndex::getIndexValue(int in_iCurrentOffset)
 {
-    char* t_strLogFuncName = "MQI_RelativeStrengthIndex::getIndexValue";
+    char* t_strLogFuncName = "MQI_MACDIndex::getIndexValue";
     char t_strLog[500];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
     //LOG4CPLUS_TRACE(m_objLogger, t_strLog);

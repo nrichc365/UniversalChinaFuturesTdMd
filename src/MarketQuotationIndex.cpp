@@ -78,8 +78,6 @@ int axapi::MarketQuotationIndex::initialize(axapi::MarketQuotationAPI *in_pMarke
         }
     }
 
-
-
     m_blAutoRun = true;
     std::thread autorun(&MarketQuotationIndex::caculate, this);
     autorun.detach();
