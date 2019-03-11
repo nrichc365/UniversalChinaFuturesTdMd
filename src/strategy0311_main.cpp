@@ -1,9 +1,7 @@
 /*
-* version 1.0
 * modified by niuchao
-* on Dec. 10th, 2018
-* 1.行情比较，判断是否下单
-* 2.n秒平仓
+* on Mar. 11th, 2019
+* 1.上穿或者下穿均线MA下单，N秒平仓，止损平仓
 */
 #define TRADEAPI_VERSION
 //#define CTP_TRADEAPI
@@ -33,18 +31,13 @@ bool g_blOpenFlag = true;
 bool g_blCancelFlag = true;
 bool g_blShutdownFlag = false;
 
-// n秒平仓
-int g_nOffsetInterval = 10;
-// 止损平仓
-int g_nOffsetPriceDiff = 10;
-// 止盈平仓
-int g_nOffsetPriceDiff2 = 0;
 // 撤单等待间隔
 int g_nCancelWaitSeconds = 0;
-// 最大回撤触发阀值
-int g_nProfitFallOffsetValve = 9999;
-// 最大回撤强平比例
-double g_dbProfitFallRate = 0.5;
+
+/// TODO:策略变量定义
+#pragma region
+int g_nProfitPoint2Offset;
+#pragma endregion
 
 //void InstrumentStatus(axapi::TradeAPI* t_tradeapi, char *t_strInstrument)
 //{
@@ -300,110 +293,26 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                         t_tradeapi->setTradeInfo(i, "Price", t_objCurrentPrice.LastPrice);
                         t_objTradeInfo.Price = t_objCurrentPrice.LastPrice;
                     }
+
                     /*
-                    * 是否强平
-                    * 0.最大回撤
-                    * 1.n秒强平
-                    * 2.止损平仓
-                    * 3.止盈平仓
+                    * TODO:是否强平
+                    * 0.达到预期盈利平仓
+                    * 1.触碰均线平仓
                     */
 #pragma region
-                    /*
-                    * 准备策略参数
-                    * 1.当前时间
-                    * 2.当前行情
-                    * 3.合约最小变动价位
-                    */
-                    /// 准备当前时间参数
-                    nowtime = time(NULL);
-                    curtime = localtime(&nowtime);
-                    t_TradeInfoHour[0] = t_objTradeInfo.apiTradeField.TradeTime[0];
-                    t_TradeInfoHour[1] = t_objTradeInfo.apiTradeField.TradeTime[1];
-                    t_TradeInfoHour[2] = '\0';
-                    t_TradeInfoMinutes[0] = t_objTradeInfo.apiTradeField.TradeTime[3];
-                    t_TradeInfoMinutes[1] = t_objTradeInfo.apiTradeField.TradeTime[4];
-                    t_TradeInfoMinutes[2] = '\0';
-                    t_TradeInfoSeconds[0] = t_objTradeInfo.apiTradeField.TradeTime[6];
-                    t_TradeInfoSeconds[1] = t_objTradeInfo.apiTradeField.TradeTime[7];
-                    t_TradeInfoSeconds[2] = '\0';
-                    if (curtime->tm_hour < 20)
-                    {
-                        curMinutes = (curtime->tm_hour) * 3600 + curtime->tm_min * 60 + curtime->tm_sec * 1;
-                        t_TradeInfoTime = atoi(t_TradeInfoHour) * 3600 + atoi(t_TradeInfoMinutes) * 60 + atoi(t_TradeInfoSeconds);
-                    }
-                    else
-                    {
-                        curMinutes = (curtime->tm_hour + 0) * 3600 + curtime->tm_min * 60 + curtime->tm_sec * 1;
-                        t_TradeInfoTime = atoi(t_TradeInfoHour) * 3600 + atoi(t_TradeInfoMinutes) * 60 + atoi(t_TradeInfoSeconds);
-                    }
-                    sprintf_s(g_strLog, "curMinutes:%d,|%d:%d:%d", curMinutes, curtime->tm_hour, curtime->tm_min, curtime->tm_sec);
-                    LOG4CPLUS_DEBUG(g_objLogger_DEBUG, g_strLog);
-                    sprintf_s(g_strLog, "t_TradeInfoHour:%d,|%s|%s:%s:%s", t_TradeInfoTime, t_objTradeInfo.apiTradeField.TradeTime, t_TradeInfoHour, t_TradeInfoMinutes, t_TradeInfoSeconds);
-                    LOG4CPLUS_DEBUG(g_objLogger_DEBUG, g_strLog);
-                    sprintf_s(g_strLog, "curMinutes:%d,t_TradeInfoTime:%d", curMinutes, t_TradeInfoTime);
-                    LOG4CPLUS_DEBUG(g_objLogger_DEBUG, g_strLog);
-                    /// 准备当前行情价 已准备
-                    /// 准备当前合约最小变动价位
                     memcpy_s(&t_objInstrumentInfo, sizeof(t_objInstrumentInfo), &t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID), sizeof(t_objInstrumentInfo));
-
-                    // 达到盈利阀值最大回撤比例止盈
-                    if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.Price) >= g_nProfitFallOffsetValve * t_objInstrumentInfo.PriceTick)
-                        || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                            && (t_objCurrentPrice.LastPrice - t_objTradeInfo.apiTradeField.Price) * (-1) >= g_nProfitFallOffsetValve * t_objInstrumentInfo.PriceTick))
+                    double t_dbMA = t_objCurrentPrice.Volume == 0 ? 0 : t_objCurrentPrice.Turnover / t_objCurrentPrice.Volume / t_objInstrumentInfo.VolumeMultiple;
+                    /// 达到预期盈利平仓
+                    if ((t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price)*(t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy ? 1 : -1) - g_nProfitPoint2Offset > 0)
                     {
-                        if ((t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                            && t_objCurrentPrice.LastPrice <= t_objTradeInfo.Price - (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * g_dbProfitFallRate)
-                            || (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                                && t_objCurrentPrice.LastPrice >= t_objTradeInfo.Price + (t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price) * (-1) * g_dbProfitFallRate))
-                        {
-                            sprintf_s(t_offsettype, 9, "prffal");
-                            t_offsetAction = true;
-                        }
-                    }
-                    // 持仓时间超过限制则平仓
-                    else if (curMinutes - t_TradeInfoTime >= g_nOffsetInterval)
-                    {
-                        sprintf_s(t_offsettype, 9, "timeout");
+                        sprintf_s(t_offsettype, 9, (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy ? "byprofit" : "slprofit"));
                         t_offsetAction = true;
                     }
-                    // 多单止损平仓
-                    else if (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.Price)
-                        <= (-1) * g_nOffsetPriceDiff * t_objInstrumentInfo.PriceTick)
+                    /// 触碰均线平仓
+                    else if ((t_objTradeInfo.Price - t_dbMA) * (t_objCurrentPrice.LastPrice - t_dbMA) < 0)
                     {
-                        sprintf_s(t_offsettype, 9, "byprsout");
+                        sprintf_s(t_offsettype, 9, (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy ? "bytchma" : "sltchma"));
                         t_offsetAction = true;
-                    }
-                    // 空单止损平仓
-                    else if (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.Price)
-                        >= g_nOffsetPriceDiff * t_objInstrumentInfo.PriceTick)
-                    {
-                        sprintf_s(t_offsettype, 9, "slprsout");
-                        t_offsetAction = true;
-                    }
-                    // 多单止盈平仓 g_nOffsetPriceDiff2=0 无止盈平仓动作
-                    else if (g_nOffsetPriceDiff2 > 0
-                        && t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
-                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.apiTradeField.Price)
-                        >= g_nOffsetPriceDiff2 * t_objInstrumentInfo.PriceTick)
-                    {
-                        sprintf_s(t_offsettype, 9, "bwprsout");
-                        t_offsetAction = true;
-                    }
-                    // 空单止盈平仓 g_nOffsetPriceDiff2=0 无止盈平仓动作
-                    else if (g_nOffsetPriceDiff2 > 0
-                        && t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Sell
-                        && (t_objCurrentPrice.LastPrice - t_objTradeInfo.apiTradeField.Price)
-                        <= (-1) * g_nOffsetPriceDiff2 * t_objInstrumentInfo.PriceTick)
-                    {
-                        sprintf_s(t_offsettype, 9, "swprsout");
-                        t_offsetAction = true;
-                    }
-                    else
-                    {
-                        t_offsetAction = false;
                     }
 #pragma endregion
 
@@ -594,10 +503,11 @@ int main()
     /*
     * 参数定义
     */
+    // 通用参数定义与赋值
+#pragma region
     char INI_FILE[] = "config.ini";
     char t_TradeServerADDR[100], t_MDServerAddr[100], t_CustNo[100], t_CustPass[100], t_BrokerNO[100], t_SleepTime[100];
-    char t_OrderStyle[10], t_CurrentPricePremium[100], t_OffsetAllTime[100], t_OffsetPriceDiff[100], t_OffsetPriceDiff2[100], t_CancelWaitSeconds[100];
-    char t_ProfitFallOffsetValve[100], t_ProfitFallRate[100];
+    char t_OrderStyle[10], t_CurrentPricePremium[100], t_OffsetAllTime[100], t_CancelWaitSeconds[100];
     char t_chInstrument[17];
     int t_nSleepTime, t_nCurrentPricePremium, t_nOffsetAllTime;
 #ifdef KSV6T_TRADEAPI
@@ -617,10 +527,6 @@ int main()
 #endif KSV6T_TRADEAPI
     GetConfigString(INI_FILE, "CANCELWAITSECONDS", t_CancelWaitSeconds, sizeof(t_CancelWaitSeconds));
     GetConfigString(INI_FILE, "SLEEPTIME", t_SleepTime, sizeof(t_SleepTime));
-    GetConfigString(INI_FILE, "OFFSETPRICEDIFF", t_OffsetPriceDiff, sizeof(t_OffsetPriceDiff));
-    GetConfigString(INI_FILE, "OFFSETPRICEDIFF2", t_OffsetPriceDiff2, sizeof(t_OffsetPriceDiff2));
-    GetConfigString(INI_FILE, "PROFITFALLOFFSETVALVE", t_ProfitFallOffsetValve, sizeof(t_ProfitFallOffsetValve));
-    GetConfigString(INI_FILE, "PROFITFALLRATE", t_ProfitFallRate, sizeof(t_ProfitFallRate));
     GetConfigString(INI_FILE, "ORDERSTYLE", t_OrderStyle, sizeof(t_OrderStyle));
     GetConfigString(INI_FILE, "CURRENTPRICE_PREMIUM", t_CurrentPricePremium, sizeof(t_CurrentPricePremium));
     GetConfigString(INI_FILE, "OFFSETALLMINUTES", t_OffsetAllTime, sizeof(t_OffsetAllTime));
@@ -628,17 +534,20 @@ int main()
     t_nSleepTime = atoi(t_SleepTime) * 1000;
     t_nCurrentPricePremium = atoi(t_CurrentPricePremium);
     t_nOffsetAllTime = atoi(t_OffsetAllTime);
-    g_nOffsetPriceDiff = atoi(t_OffsetPriceDiff);
-    g_nOffsetPriceDiff2 = atoi(t_OffsetPriceDiff2);
     g_nCancelWaitSeconds = atoi(t_CancelWaitSeconds);
-    g_nProfitFallOffsetValve = atoi(t_ProfitFallOffsetValve);
-    g_dbProfitFallRate = atof(t_ProfitFallRate);
+#pragma endregion
+
+    // TODO:策略参数定义与赋值
+#pragma region
+    char t_ProfitPoint2Offset[100];
+    GetConfigString(INI_FILE, "Strategy0311_ProfitPoint2Offset", t_ProfitPoint2Offset, sizeof(t_ProfitPoint2Offset));
+    g_nProfitPoint2Offset = atoi(t_ProfitPoint2Offset);
+#pragma endregion
 
     sprintf_s(g_strLog, "ServerAddr:%s/%s\n\
                         USER:%s/%s\n\
                         SleepTime:%d\n\
                         CancelWaitSeconds:%d\n\
-                        OffsetPriceDiff:%d\n\
                         OrderStyle:%s\n\
                         CurrentPricePremium:%d\n\
                         OffsetAllTime:14:%d\n\
@@ -647,23 +556,11 @@ int main()
         t_CustNo, t_CustPass,
         t_nSleepTime,
         g_nCancelWaitSeconds,
-        g_nOffsetPriceDiff,
         t_OrderStyle,
         t_nCurrentPricePremium,
         t_nOffsetAllTime,
         t_chInstrument);
     LOG4CPLUS_INFO(g_objLogger_INFO, g_strLog);
-
-    char t_strStrategy_PPP[5], t_strStrategy_PPN[5], t_strStrategy_PNP[5], t_strStrategy_PNN[5], t_strStrategy_NPP[5], t_strStrategy_NPN[5], t_strStrategy_NNP[5], t_strStrategy_NNN[5];
-    GetConfigString(INI_FILE, "STRATEGY_PPP", t_strStrategy_PPP, sizeof(t_strStrategy_PPP));
-    GetConfigString(INI_FILE, "STRATEGY_PPN", t_strStrategy_PPN, sizeof(t_strStrategy_PPN));
-    GetConfigString(INI_FILE, "STRATEGY_PNP", t_strStrategy_PNP, sizeof(t_strStrategy_PNP));
-    GetConfigString(INI_FILE, "STRATEGY_PNN", t_strStrategy_PNN, sizeof(t_strStrategy_PNN));
-    GetConfigString(INI_FILE, "STRATEGY_NPP", t_strStrategy_NPP, sizeof(t_strStrategy_NPP));
-    GetConfigString(INI_FILE, "STRATEGY_NPN", t_strStrategy_NPN, sizeof(t_strStrategy_NPN));
-    GetConfigString(INI_FILE, "STRATEGY_NNP", t_strStrategy_NNP, sizeof(t_strStrategy_NNP));
-    GetConfigString(INI_FILE, "STRATEGY_NNN", t_strStrategy_NNN, sizeof(t_strStrategy_NNN));
-    g_nOffsetInterval = atoi(t_SleepTime);
 
     /*
     * 链接行情网关
@@ -701,15 +598,17 @@ int main()
     char t_eoFlag = ORDER_OFFSETFLAG_OPEN;
     int t_doneQTY = 1;
     double t_donePrice;
-    double t_PriceChange, t_VolumeChange, t_OpenInterestChange;
+    double t_MAPrice;
     bool t_OrderFlag;
-    axapi::MarketDataField t_pFormerPrice1, t_pFormerPrice2;
-    memset(&t_pFormerPrice1, '\0', sizeof(t_pFormerPrice1));
-    t_pFormerPrice1.LastPrice = 0;
-    memset(&t_pFormerPrice2, '\0', sizeof(t_pFormerPrice2));
-    t_pFormerPrice2.LastPrice = 0;
     axapi::MarketDataField* t_pLaterPrice = NULL;
     APINamespace CThostFtdcInstrumentField t_objInstrumentInfo;
+
+    /// TODO:策略变量定义
+#pragma region
+    axapi::MarketDataField t_pFormerPrice1;
+    memset(&t_pFormerPrice1, '\0', sizeof(t_pFormerPrice1));
+    t_pFormerPrice1.LastPrice = 0;
+#pragma endregion
 
     t_objInstrumentInfo = t_tradeapi->getInstrumentInfo(t_chInstrument);
     t_marketapi->subMarketDataSingle(t_chInstrument);
@@ -723,221 +622,51 @@ int main()
         */
         while (g_blOpenFlag)
         {
-            t_PriceChange, t_VolumeChange, t_OpenInterestChange = 0;
+            t_MAPrice = 0;
             t_OrderFlag = false;
             Sleep(t_nSleepTime);
             t_pLaterPrice = t_marketapi->getCurrentPrice(t_chInstrument);
             if (t_pLaterPrice != NULL)
             {
+                /// TODO:策略部分
+#pragma region
+                memcpy_s(&t_objInstrumentInfo, sizeof(t_objInstrumentInfo), &t_tradeapi->getInstrumentInfo(t_chInstrument), sizeof(t_objInstrumentInfo));
                 if (t_pFormerPrice1.LastPrice == 0)
                 {
                     t_pFormerPrice1.LastPrice = t_pLaterPrice->LastPrice;
                     t_pFormerPrice1.Volume = t_pLaterPrice->Volume;
                     t_pFormerPrice1.OpenInterest = t_pLaterPrice->OpenInterest;
-                    t_pFormerPrice2.LastPrice = t_pLaterPrice->LastPrice;
-                    t_pFormerPrice2.Volume = t_pLaterPrice->Volume;
-                    t_pFormerPrice2.OpenInterest = t_pLaterPrice->OpenInterest;
                     continue;
                 }
 
                 // 策略主体，判断方向开仓
-                t_PriceChange = t_pLaterPrice->LastPrice - t_pFormerPrice2.LastPrice;
-                t_VolumeChange = (t_pLaterPrice->Volume - t_pFormerPrice2.Volume) - (t_pFormerPrice2.Volume - t_pFormerPrice1.Volume);
-                t_OpenInterestChange = t_pLaterPrice->OpenInterest - t_pFormerPrice2.OpenInterest;
-                sprintf_s(g_strLog, "PriceChange:%f;VolumeChange:%f;OpenInterestChange:%f;AveragePrice:%f",
-                    t_PriceChange,
-                    t_VolumeChange,
-                    t_OpenInterestChange,
-                    (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple));
+                t_MAPrice = t_pLaterPrice->Volume == 0 ? 0 : t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple;
+                sprintf_s(g_strLog, "FormerPrice:%f;LatestPrice2:%f;AveragePrice:%f",
+                    t_pFormerPrice1.LastPrice,
+                    t_pLaterPrice->LastPrice,
+                    t_MAPrice);
                 LOG4CPLUS_INFO(g_objLogger_INFO, g_strLog);
-                if (t_PriceChange > 0 && t_VolumeChange > 0 && t_OpenInterestChange > 0)
-                {
-                    if (strcmp(t_strStrategy_PPP, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_SELL;
-                    }
-                    else if (strcmp(t_strStrategy_PPP, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_BUY;
-                    }
-                    else
-                    {
-                        t_OrderFlag = false;
-                    }
-                }
-                else if (t_PriceChange > 0 && t_VolumeChange > 0 && t_OpenInterestChange < 0)
-                {
-                    if (strcmp(t_strStrategy_PPN, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_SELL;
-                    }
-                    else if (strcmp(t_strStrategy_PPN, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_BUY;
-                    }
-                    else
-                    {
-                        t_OrderFlag = false;
-                    }
-                }
-                else if (t_PriceChange > 0 && t_VolumeChange < 0 && t_OpenInterestChange > 0)
-                {
-                    if (strcmp(t_strStrategy_PNP, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_SELL;
-                    }
-                    else if (strcmp(t_strStrategy_PNP, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_BUY;
-                    }
-                    else
-                    {
-                        t_OrderFlag = false;
-                    }
-                }
-                else if (t_PriceChange > 0 && t_VolumeChange < 0 && t_OpenInterestChange < 0)
-                {
-                    if (strcmp(t_strStrategy_PNN, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_SELL;
-                    }
-                    else if (strcmp(t_strStrategy_PNN, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_BUY;
-                    }
-                    else
-                    {
-                        t_OrderFlag = false;
-                    }
-                }
-                else if (t_PriceChange < 0 && t_VolumeChange > 0 && t_OpenInterestChange > 0)
-                {
-                    if (strcmp(t_strStrategy_NPP, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_SELL;
-                    }
-                    else if (strcmp(t_strStrategy_NPP, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_BUY;
-                    }
-                    else
-                    {
-                        t_OrderFlag = false;
-                    }
-                }
-                else if (t_PriceChange < 0 && t_VolumeChange > 0 && t_OpenInterestChange < 0)
-                {
-                    if (strcmp(t_strStrategy_NPN, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_SELL;
-                    }
-                    else if (strcmp(t_strStrategy_NPN, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_BUY;
-                    }
-                    else
-                    {
-                        t_OrderFlag = false;
-                    }
-                }
-                else if (t_PriceChange < 0 && t_VolumeChange < 0 && t_OpenInterestChange > 0)
-                {
-                    if (strcmp(t_strStrategy_NNP, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_SELL;
-                    }
-                    else if (strcmp(t_strStrategy_NNP, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_BUY;
-                    }
-                    else
-                    {
-                        t_OrderFlag = false;
-                    }
-                }
-                else if (t_PriceChange < 0 && t_VolumeChange < 0 && t_OpenInterestChange < 0)
-                {
-                    if (strcmp(t_strStrategy_NNN, "sell") == 0 && t_pLaterPrice->LastPrice < (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_SELL;
-                    }
-                    else if (strcmp(t_strStrategy_NNN, "buy") == 0 && t_pLaterPrice->LastPrice > (t_pLaterPrice->Turnover / t_pLaterPrice->Volume / t_objInstrumentInfo.VolumeMultiple))
-                    {
-                        t_OrderFlag = true;
-                        t_bsFlag = ORDER_DIRECTION_BUY;
-                    }
-                    else
-                    {
-                        t_OrderFlag = false;
-                    }
-                }
-                /*if(t_PriceChange > 0 && t_VolumeChange < 0 && t_OpenInterestChange > 0)
-                {
-                if(strcmp(t_strStrategy_PNP, "sell")==0)
-                t_OrderFlag = true;
-                else
-                t_OrderFlag = false;
-                t_bsFlag = ORDER_DIRECTION_SELL;
-                }
-                else if(t_PriceChange > 0 && t_VolumeChange < 0 && t_OpenInterestChange < 0)
-                {
-                if(strcmp(t_strStrategy_PNN, "true")==0)
-                t_OrderFlag = true;
-                else
-                t_OrderFlag = false;
-                t_bsFlag = ORDER_DIRECTION_SELL;
-                }
-                else if(t_PriceChange < 0 && t_VolumeChange < 0 && t_OpenInterestChange > 0)
-                {
-                if(strcmp(t_strStrategy_NNP, "true")==0)
-                t_OrderFlag = true;
-                else
-                t_OrderFlag = false;
-                t_OrderFlag = true;
-                t_bsFlag = ORDER_DIRECTION_BUY;
-                }
-                else if(t_PriceChange < 0 && t_VolumeChange < 0 && t_OpenInterestChange < 0)
-                {
-                if(strcmp(t_strStrategy_NNN, "true")==0)
-                t_OrderFlag = true;
-                else
-                t_OrderFlag = false;
-                t_OrderFlag = true;
-                t_bsFlag = ORDER_DIRECTION_BUY;
-                }
-                else
-                {
-                t_OrderFlag = false;
-                t_pFormerPrice1.LastPrice = t_pFormerPrice2.LastPrice;
-                t_pFormerPrice1.Volume = t_pFormerPrice2.Volume;
-                t_pFormerPrice1.OpenInterest = t_pFormerPrice2.OpenInterest;
-                t_pFormerPrice2.LastPrice = t_pLaterPrice->LastPrice;
-                t_pFormerPrice2.Volume = t_pLaterPrice->Volume;
-                t_pFormerPrice2.OpenInterest = t_pLaterPrice->OpenInterest;
-                continue;
-                }*/
 
-                t_pFormerPrice1.LastPrice = t_pFormerPrice2.LastPrice;
-                t_pFormerPrice1.Volume = t_pFormerPrice2.Volume;
-                t_pFormerPrice1.OpenInterest = t_pFormerPrice2.OpenInterest;
-                t_pFormerPrice2.LastPrice = t_pLaterPrice->LastPrice;
-                t_pFormerPrice2.Volume = t_pLaterPrice->Volume;
-                t_pFormerPrice2.OpenInterest = t_pLaterPrice->OpenInterest;
+                if ((t_pFormerPrice1.LastPrice - t_MAPrice) * (t_pLaterPrice->LastPrice - t_MAPrice) < 0)
+                {
+                    // 向下穿
+                    if ((t_pFormerPrice1.LastPrice - t_MAPrice) > 0)
+                    {
+                        t_OrderFlag = true;
+                        t_bsFlag = ORDER_DIRECTION_SELL;
+                    }
+                    // 向上穿
+                    else if ((t_pFormerPrice1.LastPrice - t_MAPrice) < 0)
+                    {
+                        t_OrderFlag = true;
+                        t_bsFlag = ORDER_DIRECTION_BUY;
+                    }
+                }
+
+                t_pFormerPrice1.LastPrice = t_pLaterPrice->LastPrice;
+                t_pFormerPrice1.Volume = t_pLaterPrice->Volume;
+                t_pFormerPrice1.OpenInterest = t_pLaterPrice->OpenInterest;
+#pragma endregion
 
                 //开仓主体
                 if (t_OrderFlag)
@@ -1031,6 +760,6 @@ int main()
     delete(t_tradeapi);
     delete(t_marketapi);
     return 0;
-}
+    }
 
 
