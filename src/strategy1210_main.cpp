@@ -6,8 +6,8 @@
 * 2.n秒平仓
 */
 #define TRADEAPI_VERSION
-//#define CTP_TRADEAPI
-#define KSV6T_TRADEAPI
+#define CTP_TRADEAPI
+//#define KSV6T_TRADEAPI
 #define MEMORYDATA
 #define KLINESTORAGE
 #define _CRT_SECURE_NO_WARNINGS
@@ -362,11 +362,11 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                         }
                     }
                     // 持仓时间超过限制则平仓
-                    else if (curMinutes - t_TradeInfoTime >= g_nOffsetInterval)
+                    /*else if (curMinutes - t_TradeInfoTime >= g_nOffsetInterval)
                     {
                         sprintf_s(t_offsettype, 9, "timeout");
                         t_offsetAction = true;
-                    }
+                    }*/
                     // 多单止损平仓
                     else if (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy
                         && (t_objCurrentPrice.LastPrice - t_objTradeInfo.Price)

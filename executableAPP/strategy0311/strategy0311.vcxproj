@@ -133,7 +133,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;$(SolutionDir)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>configRead_dll.lib;log4cplusUD.lib;MarketQuotationAPI.lib;TradeAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>configRead_dll.lib;log4cplusU.lib;MarketQuotationAPI.lib;TradeAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
