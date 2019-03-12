@@ -301,15 +301,18 @@ void Offset(axapi::TradeAPI* t_tradeapi, axapi::MarketQuotationAPI* t_marketapi)
                     */
 #pragma region
                     memcpy_s(&t_objInstrumentInfo, sizeof(t_objInstrumentInfo), &t_tradeapi->getInstrumentInfo(t_objTradeInfo.apiTradeField.InstrumentID), sizeof(t_objInstrumentInfo));
-                    double t_dbMA = t_objCurrentPrice.Volume == 0 ? 0 : t_objCurrentPrice.Turnover / t_objCurrentPrice.Volume / t_objInstrumentInfo.VolumeMultiple;
+                    double t_dbMA = t_objCurrentPrice.Volume == 0 ? 0 : (t_objCurrentPrice.Turnover / t_objCurrentPrice.Volume / t_objInstrumentInfo.VolumeMultiple);
                     /// 达到预期盈利平仓
-                    if ((t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price)*(t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy ? 1 : -1) - g_nProfitPoint2Offset > 0)
+                    if ((t_objTradeInfo.Price - t_objTradeInfo.apiTradeField.Price)
+                        *(t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy ? 1 : -1)
+                        - (g_nProfitPoint2Offset *  t_objInstrumentInfo.PriceTick) > 0)
                     {
                         sprintf_s(t_offsettype, 9, (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy ? "byprofit" : "slprofit"));
                         t_offsetAction = true;
                     }
                     /// 触碰均线平仓
-                    else if ((t_objTradeInfo.Price - t_dbMA) * (t_objCurrentPrice.LastPrice - t_dbMA) < 0)
+                    else if ((t_objTradeInfo.Price - t_dbMA)
+                        * (t_objCurrentPrice.LastPrice - t_dbMA) < 0)
                     {
                         sprintf_s(t_offsettype, 9, (t_objTradeInfo.apiTradeField.Direction == THOST_FTDC_D_Buy ? "bytchma" : "sltchma"));
                         t_offsetAction = true;
@@ -760,6 +763,6 @@ int main()
     delete(t_tradeapi);
     delete(t_marketapi);
     return 0;
-    }
+}
 
 
