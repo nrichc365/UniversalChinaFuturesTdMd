@@ -1,5 +1,5 @@
-#define CTP_TRADEAPI
-//#define KSV6T_TRADEAPI
+//#define CTP_TRADEAPI
+#define KSV6T_TRADEAPI
 #define MEMORYDATA
 //#define SQLITE3DATA
 #include "TradeAPI.h"
@@ -16,14 +16,17 @@ void main()
     //axapi::TradeAPI *p_tradeAPI = new axapi::TradeAPI("4500", "80005000336", "197913", "tcp://27.115.97.3:41205");
 #endif CTP_TRADEAPI
 
-    char *t_strContract = "m1905";
+    char *t_strContract = "rb1905";
     int t_nRequestID = p_tradeAPI->queryMarketData(t_strContract);
-    while(!p_tradeAPI->checkCompletedQueryRequestID(t_nRequestID))
+    while (!p_tradeAPI->checkCompletedQueryRequestID(t_nRequestID))
     {
         Sleep(1000);
     }
     APINamespace CThostFtdcDepthMarketDataField t_MarketData = p_tradeAPI->getLatestPrice();
-    p_tradeAPI->MyOrdering("m1905", ORDER_DIRECTION_BUY, ORDER_OFFSETFLAG_OPEN, ORDER_LIMITPRICE, 1, t_MarketData.LowerLimitPrice);
+    long t_OrderRef = 0;
+    p_tradeAPI->MyOrdering("rb1905", ORDER_DIRECTION_BUY, ORDER_OFFSETFLAG_OPEN, ORDER_LIMITPRICE, 1, t_MarketData.LowerLimitPrice, &t_OrderRef);
+
+    std::cout << "t_OrderRef:" << t_OrderRef << std::endl;
 
     // 持仓明细
 #pragma region
@@ -50,13 +53,17 @@ void main()
 
     // 委托信息
 #pragma region
-    int t_nOrderSize = p_tradeAPI->sizeOrderList();
-    std::cout << "t_nOrderSize:" << t_nOrderSize << std::endl;
-    while(true)
+    while (true)
     {
-        for(int i = 1; i <= t_nOrderSize; i++)
+        int t_nOrderSize = p_tradeAPI->sizeOrderList();
+        std::cout << "t_nOrderSize:" << t_nOrderSize << std::endl;
+        for (int i = 1; i <= t_nOrderSize; i++)
         {
-            std::cout << p_tradeAPI->getOrderInfo(i).OrderSysID << "|" << p_tradeAPI->getOrderInfo(i).InstrumentID << "|" << p_tradeAPI->getOrderInfo(i).OrderStatus << std::endl;
+            std::cout << p_tradeAPI->getOrderInfo(i).OrderRef << "|"
+                << p_tradeAPI->getOrderInfo(i).OrderSysID << "|"
+                << p_tradeAPI->getOrderInfo(i).InstrumentID << "|"
+                << p_tradeAPI->getOrderInfo(i).OrderStatus
+                << std::endl;
         }
         Sleep(2000);
     }
@@ -65,7 +72,7 @@ void main()
 
     // 普通循环
 #pragma region
-    while(true)
+    while (true)
     {
         Sleep(2000);
     }
