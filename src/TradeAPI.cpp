@@ -1,4 +1,4 @@
-#define TradeAPI_EXE
+#define TradeAPI_EXP
 //#define CTP_TRADEAPI
 #define KSV6T_TRADEAPI
 #define MEMORYDATA
