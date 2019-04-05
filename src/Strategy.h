@@ -13,9 +13,18 @@
 #endif STRATEGY_EXE
 
 #define _SCL_SECURE_NO_WARNINGS
+#define MEMORYDATA
+#define KLINESTORAGE
 
 #include <MarketQuotationAPI.h>
 #include <TradeAPI.h>
+#include <TradeAPITypeDefine.h>
+#include <log4cplus/logger.h>
+#include <log4cplus/configurator.h>
+#include <log4cplus/helpers/loglog.h>
+#include <log4cplus/helpers/stringhelper.h>
+#include <log4cplus/helpers/sleep.h>
+#include <log4cplus/loggingmacros.h>
 #include <string>
 #include <vector>
 #include <hash_map>
@@ -83,7 +92,7 @@ namespace axapi
         UniversalChinaFutureTdTimeType        InsertTime;
         /// 如果委托为平仓,则标识对应的成交ID
         UniversalChinaFutureTdTradeIDType     HoldTradeID;
-        std::vector<UniversalChinaFutureTdTradeIDType> TradeIDList;
+        std::vector<std::string/*UniversalChinaFutureTdTradeIDType*/> TradeIDList;
     };
 
     /// 已与回报确认过的开仓成交,可以作为策略中持仓信息查询
@@ -91,14 +100,16 @@ namespace axapi
     {
         UniversalChinaFutureTdTradeIDType              TradeID;
         UniversalChinaFutureTdOrderIDType              SPOrderID;
-        std::vector<UniversalChinaFutureTdOrderIDType> SLOrderID;
+        std::vector<std::string/*UniversalChinaFutureTdOrderIDType*/> SLOrderID;
         UniversalChinaFutureTdTradeStatusType          TradeStatus;
         UniversalChinaFutureTdInstrumentIDType         InstrumentID;
         UniversalChinaFutureTdDirectionType            Direction;
         UniversalChinaFutureTdVolumnType               Volumn;
         UniversalChinaFutureTdPriceType                Price;
+        UniversalChinaFutureTdTimeType                 TradeTime;
         UniversalChinaFutureTdVolumnType               AvailableVolumn;
         UniversalChinaFutureTdVolumnType               OffsetVolumn;
+        UniversalChinaFutureTdPriceType                HighestProfitPrice;
     };
 
     /// 平仓后记录,未与持仓信息匹配的平仓信息
@@ -109,39 +120,94 @@ namespace axapi
         UniversalChinaFutureTdOffsetOrderTypeType OffsetOrderType;
     };
 
-    ///
-
+    /// 策略接口
     class STRATEGY_EXPORT Strategy
     {
+        /*
+        * 基本初始化
+        */
+#pragma region
+    private:
+        /// 用于日志,初始化必须设置
+        log4cplus::Logger m_root;
+        /// 用于日志,初始化必须设置
+        log4cplus::Logger m_objLogger;
+        /// 初始化日志文件
+        int initializeLog();
+    protected:
+        /// 标准行情接口
+        axapi::MarketQuotationAPI *m_pMarketQuotation;
+        /// 标准交易接口
+        axapi::TradeAPI *m_pTrade;
+        /// 设置接口
+        int setAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
+#ifndef STRATEGY_EXE
+        /// 用于继承类日志,初始化必须设置
+        log4cplus::Logger m_objLoggerSub;
+        /// TODO:初始化日志文件 { m_objLoggerSub = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("SUBStrategyNAME")); }
+        virtual int initializeSubLog() = 0;
+#endif STRATEGY_EXE
     public:
         /// 初始化行情与交易接口
         int initializeAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
+        /// 初始化
+        Strategy(void);
+        ~Strategy(void);
+#pragma endregion
+
+        /*
+        * 运行控制
+        */
+#pragma region
+    private:
+        /// 策略运行开关
+        bool m_blStrategyRunning;
+        /// 清仓运行开关
+        bool m_blOffsetALLRunning;
+        /// 平仓策略运行开关
+        bool m_blOffsetRunning;
+        /// 开仓策略运行开关
+        bool m_blOpenRunning;
+        /// 撤单运行开关
+        bool m_blCancelRunning;
+        /// 退出开关
+        bool m_blShutdownFlag;
+        /// 开仓进程结束触发
+        HANDLE m_hOpenFinished;
+        /// 平仓进程结束触发
+        HANDLE m_hOffsetFinished;
+        /// 撤单进程结束触发
+        HANDLE m_hCancelFinished;
+        /// 清仓进程结束触发
+        HANDLE m_hOffsetAllFinished;
+        /// 委托更新进程结束触发
+        HANDLE m_hUpdateOrderFinished;
+        /// 成交更新进程结束触发
+        HANDLE m_hUpdateTradeFinished;
+        /// 策略执行开始
+        void startStrategy();
+        /// 策略执行停止
+        void stopStrategy();
+        /// 策略执行暂停
+        void pauseStrategy() {};
+        /// 策略执行重启
+        void continueStrategy() {};
+    protected:
+        /// 获得运行状态
+        bool getOpenRunning();
+        bool getOffsetRunning();
+    public:
         /// 策略执行状态切换
         void start() { startStrategy(); };
         void stop() { stopStrategy(); };
         void pause() { pauseStrategy(); };
         void continu() { continueStrategy(); };
-        /// 初始化
-        Strategy(void);
-        ~Strategy(void);
+#pragma endregion
 
-    protected:
-        /// 外接行情数据
-        axapi::MarketQuotationAPI *m_pMarketQuotation;
-        axapi::TradeAPI *m_pTrade;
-        /// 设置接口
-        int setAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
-        /// 获得运行状态
-        bool getOpenRunning();
-        bool getOffsetRunning();
-
-        /// TODO:策略主体
-        void myStrategy(bool *ot_blOpenFlag, std::string *ot_strOpenMsg, char *ot_strContract, int *ot_nDirection, int *ot_nOffsetFlag, int *ot_nOrderTypeFlag, int *ot_nOrderAmount, double *ot_dOrderPrice);
-        /// TODO:平仓主体
-        void myOffsetStrategy(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blOffsetFlag, std::string *ot_strOffsetMsg);
-        /// TODO:预埋单价位获得
-        void getPreOffsetPrice(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blSPOffsetFlag, double *ot_dbSPOffsetPrice);
-
+        /*
+        * 策略
+        */
+#pragma region
     private:
         /// 记录已报所有委托,报入失败的也在其中
         std::hash_map<std::string/*UniversalChinaFutureTdOrderRefType*/, struct AllOrder> m_hashAllOrder;
@@ -156,36 +222,13 @@ namespace axapi
         /// 记录未与持仓信息匹配的平仓信息,临时中转使用,待确认后即删除
         std::hash_map<std::string/*UniversalChinaFutureTdTradeIDType*/, struct UnpairedOffsetOrder> m_hashUnpairedOffsetOrder;
 
-        /// 执行状态
-        bool m_blStrategyRunning;
-        bool m_blOffsetALLRunning;
-        bool m_blOffsetRunning;
-        bool m_blOpenRunning;
-        bool m_blCancelRunning;
-        bool m_blShutdownFlag;
-        HANDLE m_hOpenFinished;
-        HANDLE m_hOffsetFinished;
-        HANDLE m_hCancelFinished;
-        HANDLE m_hOffsetAllFinished;
-        HANDLE m_hUpdateOrderFinished;
-        HANDLE m_hUpdateTradeFinished;
 
-        /// 策略参数
+        /// 策略参数:撤单等待秒数
         unsigned int m_nCancelWaitSeconds;
-
-        /// 委托更新次数
+        /// 委托更新次数计数器
         unsigned int m_nUpdateOrderTimes;
-        /// 成交更新次数
+        /// 成交更新次数计数器
         unsigned int m_nUpdateTradeTimes;
-
-        /// 策略执行开始
-        void startStrategy();
-        /// 策略执行停止
-        void stopStrategy();
-        /// 策略执行暂停
-        void pauseStrategy() {};
-        /// 策略执行重启
-        void continueStrategy() {};
 
         /// 检索委托回报
         void updateOrderInfo();
@@ -205,6 +248,25 @@ namespace axapi
         bool strategyHoldCompare();
         /// 运行数据保存
         void saveData();
+    protected:
+#ifdef STRATEGY_EXE
+        /// TODO:策略主体
+        void myStrategy(bool *ot_blOpenFlag, std::string *ot_strOpenMsg, char *ot_strContract, int *ot_nDirection, int *ot_nOffsetFlag, int *ot_nOrderTypeFlag, int *ot_nOrderAmount, double *ot_dOrderPrice);
+        /// TODO:平仓主体
+        void myOffsetStrategy(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blOffsetFlag, std::string *ot_strOffsetMsg);
+        /// TODO:预埋单价位获得
+        void getPreOffsetPrice(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blSPOffsetFlag, double *ot_dbSPOffsetPrice);
+#endif STRATEGY_EXE
+#ifndef STRATEGY_EXE
+        /// TODO:策略主体
+        virtual void myStrategy(bool *ot_blOpenFlag, std::string *ot_strOpenMsg, char *ot_strContract, int *ot_nDirection, int *ot_nOffsetFlag, int *ot_nOrderTypeFlag, int *ot_nOrderAmount, double *ot_dOrderPrice) = 0;
+        /// TODO:平仓主体
+        virtual void myOffsetStrategy(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blOffsetFlag, std::string *ot_strOffsetMsg) = 0;
+        /// TODO:预埋单价位获得
+        virtual void getPreOffsetPrice(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blSPOffsetFlag, double *ot_dbSPOffsetPrice) = 0;
+#endif STRATEGY_EXE
+    public:
+#pragma endregion
 
     };
 }

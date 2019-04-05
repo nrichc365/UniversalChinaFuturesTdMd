@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\Strategy_main.cpp">
+    <ClCompile Include="..\..\src\strategy_P8_main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Strategy.cpp">
+    <ClCompile Include="..\..\src\strategy_P8.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\Strategy.h">
+    <ClInclude Include="..\..\src\strategy_P8.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

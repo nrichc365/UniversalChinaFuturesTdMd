@@ -1,6 +1,6 @@
 #define TradeAPI_EXP
-//#define CTP_TRADEAPI
-#define KSV6T_TRADEAPI
+#define CTP_TRADEAPI
+//#define KSV6T_TRADEAPI
 #define MEMORYDATA
 //#define SQLITE3DATA
 #define LOGGER_NAME "TradeAPI"
@@ -18,6 +18,10 @@ axapi::TradeAPI::TradeAPI(void)
     {
         //LOG4CPLUS_FATAL(m_root, "initialize LOG OK");
         LOG4CPLUS_FATAL(m_objLogger, "initialize LOG OK");
+    }
+    else
+    {
+        LOG4CPLUS_FATAL(m_objLogger, "initialize LOG ERROR");
     }
 #ifdef SQLITE3DATA
     if (initialDB() == 0)
@@ -37,6 +41,10 @@ axapi::TradeAPI::TradeAPI(APINamespace TThostFtdcBrokerIDType in_chBrokerID, API
     {
         //LOG4CPLUS_FATAL(m_root, "initialize LOG OK");
         LOG4CPLUS_FATAL(m_objLogger, "initialize LOG OK");
+    }
+    else
+    {
+        LOG4CPLUS_FATAL(m_objLogger, "initialize LOG ERROR");
     }
 #ifdef SQLITE3DATA
     if (initialDB() == 0)
@@ -129,7 +137,7 @@ int axapi::TradeAPI::initialLog()
     m_objLogger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT(LOGGER_NAME));
     try {
         log4cplus::ConfigureAndWatchThread configureThread(
-            LOG4CPLUS_TEXT("log4cplus.properties"), 5 * 1000);
+            LOG4CPLUS_TEXT("log4cplus.properties1"), 5 * 1000);
     }
     catch (std::exception e) {
         LOG4CPLUS_FATAL(m_root, "initialLog exception");
