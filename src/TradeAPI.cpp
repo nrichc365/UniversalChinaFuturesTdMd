@@ -137,7 +137,7 @@ int axapi::TradeAPI::initialLog()
     m_objLogger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT(LOGGER_NAME));
     try {
         log4cplus::ConfigureAndWatchThread configureThread(
-            LOG4CPLUS_TEXT("log4cplus.properties1"), 5 * 1000);
+            LOG4CPLUS_TEXT("log4cplus.properties"), 5 * 1000);
     }
     catch (std::exception e) {
         LOG4CPLUS_FATAL(m_root, "initialLog exception");

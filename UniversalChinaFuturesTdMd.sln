@@ -60,6 +60,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "strategyAPP", "strategyAPP", "{64A836CC-B39B-4F27-AFC0-E4526FCEDB5E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "strategy_P8", "strategyAPP\strategy_P8\strategy_P8.vcxproj", "{E08BB14A-56C8-4ED8-B7BD-53DF68096792}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AECBBE6E-7C8A-4B65-B749-44DD123DE17D} = {AECBBE6E-7C8A-4B65-B749-44DD123DE17D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "strategy_MA", "strategyAPP\strategy_MA\strategy_MA.vcxproj", "{3E1ACB80-0208-4479-8076-F6AE1961965D}"
 EndProject

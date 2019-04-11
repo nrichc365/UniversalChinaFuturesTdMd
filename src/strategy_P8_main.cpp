@@ -2,12 +2,14 @@
 //#define KSV6T_TRADEAPI
 #include "strategy_P8.h"
 #include "configRead_dll/readConfig.h"
+#include <iostream>
 
 void main()
 {
     /*
     * 参数定义
     */
+    char t_strLog[500];
     char INI_FILE[] = "config.ini";
     char t_TradeServerADDR[100], t_MDServerAddr[100], t_CustNo[100], t_CustPass[100], t_BrokerNO[100], t_SleepTime[100];
     char t_OrderStyle[10], t_CurrentPricePremium[100], t_OffsetAllTime[100], t_OffsetPriceDiff[100], t_OffsetPriceDiff2[100], t_CancelWaitSeconds[100];
@@ -42,31 +44,6 @@ void main()
     t_nSleepTime = atoi(t_SleepTime) * 1000;
     t_nCurrentPricePremium = atoi(t_CurrentPricePremium);
     t_nOffsetAllTime = atoi(t_OffsetAllTime);
-    g_nOffsetPriceDiff = atoi(t_OffsetPriceDiff);
-    g_nOffsetPriceDiff2 = atoi(t_OffsetPriceDiff2);
-    g_nCancelWaitSeconds = atoi(t_CancelWaitSeconds);
-    g_nProfitFallOffsetValve = atoi(t_ProfitFallOffsetValve);
-    g_dbProfitFallRate = atof(t_ProfitFallRate);
-
-    sprintf_s(g_strLog, "ServerAddr:%s/%s\n\
-                        USER:%s/%s\n\
-                        SleepTime:%d\n\
-                        CancelWaitSeconds:%d\n\
-                        OffsetPriceDiff:%d\n\
-                        OrderStyle:%s\n\
-                        CurrentPricePremium:%d\n\
-                        OffsetAllTime:14:%d\n\
-                        Instrument:%s",
-        t_TradeServerADDR, t_BrokerNO,
-        t_CustNo, t_CustPass,
-        t_nSleepTime,
-        g_nCancelWaitSeconds,
-        g_nOffsetPriceDiff,
-        t_OrderStyle,
-        t_nCurrentPricePremium,
-        t_nOffsetAllTime,
-        t_chInstrument);
-    LOG4CPLUS_INFO(g_objLogger_INFO, g_strLog);
 
     char t_strStrategy_PPP[5], t_strStrategy_PPN[5], t_strStrategy_PNP[5], t_strStrategy_PNN[5], t_strStrategy_NPP[5], t_strStrategy_NPN[5], t_strStrategy_NNP[5], t_strStrategy_NNN[5];
     GetConfigString(INI_FILE, "STRATEGY_PPP", t_strStrategy_PPP, sizeof(t_strStrategy_PPP));
@@ -77,29 +54,45 @@ void main()
     GetConfigString(INI_FILE, "STRATEGY_NPN", t_strStrategy_NPN, sizeof(t_strStrategy_NPN));
     GetConfigString(INI_FILE, "STRATEGY_NNP", t_strStrategy_NNP, sizeof(t_strStrategy_NNP));
     GetConfigString(INI_FILE, "STRATEGY_NNN", t_strStrategy_NNN, sizeof(t_strStrategy_NNN));
-    g_nOffsetInterval = atoi(t_SleepTime);
 
     /*
     * 链接行情网关
     */
-#ifdef TRADEAPI_VERSION
     axapi::MarketQuotationAPI* t_marketapi = new axapi::MarketQuotationAPI(t_BrokerNO, t_CustNo, t_CustPass, t_MDServerAddr);
-#endif TRADEAPI_VERSION
     /*
     * 连接交易网关
     */
-#ifdef TRADEAPI_VERSION
     axapi::TradeAPI* t_tradeapi = new axapi::TradeAPI(t_BrokerNO, t_CustNo, t_CustPass, t_TradeServerADDR);
     //axapi::TradeAPI* t_tradeapi = new axapi::TradeAPI("6C2D786C", "8000100012", "123456", "tcp://10.6.3.183:17993");
-#endif TRADEAPI_VERSION
 
-    strategy_P8 *pSP8 = new strategy_P8();
-    if (pSP8->initializeAPI(pmarketquotationapi, p_tradeAPI) == 0)
+    strategy_P8 *pSP8 = new strategy_P8(t_chInstrument, atoi(t_CancelWaitSeconds), t_strStrategy_PPP, t_strStrategy_PPN, t_strStrategy_PNP, t_strStrategy_PNN, t_strStrategy_NPP, t_strStrategy_NPN, t_strStrategy_NNP, t_strStrategy_NNN, atoi(t_SleepTime), atoi(t_OffsetPriceDiff), atoi(t_OffsetPriceDiff2), atoi(t_ProfitFallOffsetValve), atof(t_ProfitFallRate));
+    if (pSP8->initializeAPI(t_marketapi, t_tradeapi) == 0)
     {
+        t_marketapi->subMarketDataSingle(t_chInstrument);
         pSP8->start();
         for (int i = 0; i < 20; i++)
         {
             Sleep(1000);
+        }
+        while (true)
+        {
+            while (true)
+            {
+                time_t nowtime = time(NULL);
+                tm *curtime = localtime(&nowtime);
+                //std::cout << "current time:" << curtime->tm_hour << ":" << curtime->tm_min << std::endl;
+                //std::cout << "false:" << false << "|" << (curtime->tm_hour >= 14 && curtime->tm_min >= t_nOffsetAllTime) << endl;
+                //std::cout << "false:" << false << "|" << ((curtime->tm_hour >= 14 && curtime->tm_min >= t_nOffsetAllTime) || curtime->tm_hour >= 15) << endl;
+
+                /// 14:??-19:59为清盘时间
+                if (((curtime->tm_hour >= 14 && curtime->tm_min >= t_nOffsetAllTime) || curtime->tm_hour >= 15) && curtime->tm_hour < 20)
+                {
+                    sprintf_s(t_strLog, "到清盘时间:%d:%d:%d", curtime->tm_hour, curtime->tm_min, curtime->tm_sec);
+                    std::cout << t_strLog << std::endl;
+                    break;
+                }
+                Sleep(1000);
+            }
         }
         pSP8->stop();
     }

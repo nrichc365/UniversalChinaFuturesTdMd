@@ -222,9 +222,6 @@ namespace axapi
         /// 记录未与持仓信息匹配的平仓信息,临时中转使用,待确认后即删除
         std::hash_map<std::string/*UniversalChinaFutureTdTradeIDType*/, struct UnpairedOffsetOrder> m_hashUnpairedOffsetOrder;
 
-
-        /// 策略参数:撤单等待秒数
-        unsigned int m_nCancelWaitSeconds;
         /// 委托更新次数计数器
         unsigned int m_nUpdateOrderTimes;
         /// 成交更新次数计数器
@@ -248,8 +245,13 @@ namespace axapi
         bool strategyHoldCompare();
         /// 运行数据保存
         void saveData();
+        /// 加载存量运行数据
+        void loadData();
     protected:
+        /// 策略参数:撤单等待秒数
+        unsigned int m_nCancelWaitSeconds;
 #ifdef STRATEGY_EXE
+        int m_nOpenCount;
         /// TODO:策略主体
         void myStrategy(bool *ot_blOpenFlag, std::string *ot_strOpenMsg, char *ot_strContract, int *ot_nDirection, int *ot_nOffsetFlag, int *ot_nOrderTypeFlag, int *ot_nOrderAmount, double *ot_dOrderPrice);
         /// TODO:平仓主体

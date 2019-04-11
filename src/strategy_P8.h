@@ -43,11 +43,7 @@ protected:
     /// TODO:预埋单价位获得
     void getPreOffsetPrice(struct axapi::ConfirmedHoldTrade in_objHoldTrade, bool *ot_blSPOffsetFlag, double *ot_dbSPOffsetPrice);
 public:
-    strategy_P8(char *in_chInstrument,
-        char *in_chPPPDirection, char *in_chPPNDirection, char *in_chPNPDirection, char *in_chPNNDirection,
-        char *in_chNPPDirection, char *in_chNPNDirection, char *in_chNNPDirection, char *in_chNNNDirection,
-        int in_nOffsetInterval = INT_MAX, int in_nOffsetPriceDiff = INT_MAX, int in_nOffsetPriceDiff2 = INT_MAX,
-        int in_nProfitFallOffsetValve = INT_MAX, double in_dbProfitFallRate = 1);
+    strategy_P8(char *in_chInstrument, int in_nCancelWaitSeconds, char *in_chPPPDirection, char *in_chPPNDirection, char *in_chPNPDirection, char *in_chPNNDirection, char *in_chNPPDirection, char *in_chNPNDirection, char *in_chNNPDirection, char *in_chNNNDirection, int in_nOffsetInterval = INT_MAX, int in_nOffsetPriceDiff = INT_MAX, int in_nOffsetPriceDiff2 = INT_MAX, int in_nProfitFallOffsetValve = INT_MAX, double in_dbProfitFallRate = 1);
     ~strategy_P8();
 };
 

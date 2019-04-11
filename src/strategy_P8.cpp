@@ -2,13 +2,14 @@
 //#define KSV6T_TRADEAPI
 #include "strategy_P8.h"
 
-strategy_P8::strategy_P8(char * in_chInstrument, char * in_chPPPDirection, char * in_chPPNDirection, char * in_chPNPDirection, char * in_chPNNDirection, char * in_chNPPDirection, char * in_chNPNDirection, char * in_chNNPDirection, char * in_chNNNDirection, int in_nOffsetInterval, int in_nOffsetPriceDiff, int in_nOffsetPriceDiff2, int in_nProfitFallOffsetValve, double in_dbProfitFallRate)
+strategy_P8::strategy_P8(char * in_chInstrument, int in_nCancelWaitSeconds, char * in_chPPPDirection, char * in_chPPNDirection, char * in_chPNPDirection, char * in_chPNNDirection, char * in_chNPPDirection, char * in_chNPNDirection, char * in_chNNPDirection, char * in_chNNNDirection, int in_nOffsetInterval, int in_nOffsetPriceDiff, int in_nOffsetPriceDiff2, int in_nProfitFallOffsetValve, double in_dbProfitFallRate)
 {
     memset(&m_objFormerPrice1, '\0', sizeof(m_objFormerPrice1));
     memset(&m_objFormerPrice2, '\0', sizeof(m_objFormerPrice2));
     memset(&m_objInstrumentInfo, '\0', sizeof(m_objInstrumentInfo));
     m_pCurrentPrice = NULL;
     strcpy_s(m_chInstrument, sizeof(m_chInstrument), in_chInstrument);
+    m_nCancelWaitSeconds = in_nCancelWaitSeconds;
     strcpy_s(m_chStrategy_PPP, sizeof(m_chStrategy_PPP), in_chPPPDirection);
     strcpy_s(m_chStrategy_PPN, sizeof(m_chStrategy_PPN), in_chPPNDirection);
     strcpy_s(m_chStrategy_PNP, sizeof(m_chStrategy_PNP), in_chPNPDirection);
@@ -30,11 +31,6 @@ strategy_P8::strategy_P8(char * in_chInstrument, char * in_chPPPDirection, char 
     {
         m_pCurrentPrice = m_pMarketQuotation->getCurrentPrice(m_chInstrument);
     }
-}
-
-
-strategy_P8::strategy_P8(char * in_chInstrument, char * in_chPPPDirection, char * in_chPPNDirection, char * in_chPNPDirection, char * in_chPNNDirection, char * in_chNPPDirection, char * in_chNPNDirection, char * in_chNNPDirection, char * in_chNNNDirection, int in_nOffsetInterval, int in_nOffsetPriceDiff, int in_nOffsetPriceDiff2, int in_nProfitFallOffsetValve, double in_dbProfitFallRate)
-{
 }
 
 strategy_P8::~strategy_P8()
