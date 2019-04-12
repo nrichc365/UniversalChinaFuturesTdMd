@@ -44,6 +44,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TradeAPI_HC", "TradeAPI_HC\TradeAPI_HC.vcxproj", "{8C947FB0-7736-43D2-8D3F-4061DA0AF11D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MACD", "index\MACD\MACD.vcxproj", "{EA131D7B-717D-4562-9FFA-E758C898C4DE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C2E74993-103D-4AF7-82E9-61E85502BD9E} = {C2E74993-103D-4AF7-82E9-61E85502BD9E}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "strategy0311", "executableAPP\strategy0311\strategy0311.vcxproj", "{9735089C-186E-4FCC-8010-10ED66A7398E}"
 	ProjectSection(ProjectDependencies) = postProject

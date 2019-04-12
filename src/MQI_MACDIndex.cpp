@@ -19,8 +19,7 @@ axapi::MQI_MACDIndex::~MQI_MACDIndex()
     //LOG4CPLUS_TRACE(m_objLogger, t_strLog);
 }
 
-int axapi::MQI_MACDIndex::initialize(axapi::MarketQuotationAPI *in_pMarketQuotationAPI,
-    unsigned int in_n1mKBars4EMA1, unsigned int in_n1mKBars4EMA2, unsigned int in_n1mKBars4DEA, std::string in_strContract)
+int axapi::MQI_MACDIndex::initialize(axapi::MarketQuotationAPI *in_pMarketQuotationAPI, std::string in_strContract)
 {
     char* t_strLogFuncName = "MarketQuotationIndex::initialize";
     char t_strLog[500];
@@ -33,7 +32,7 @@ int axapi::MQI_MACDIndex::initialize(axapi::MarketQuotationAPI *in_pMarketQuotat
         WaitForSingleObject(m_hCaculateRuning, INFINITE);
     }
     /// 传入参数错误则返回错误
-    if (in_pMarketQuotationAPI == NULL || in_n1mKBars4EMA1 <= 0 || in_n1mKBars4EMA2 <= 0 || in_n1mKBars4DEA <= 0 || in_strContract.size() == 0)
+    if (in_pMarketQuotationAPI == NULL || in_strContract.size() == 0)
     {
         return -100;
     }
@@ -41,9 +40,7 @@ int axapi::MQI_MACDIndex::initialize(axapi::MarketQuotationAPI *in_pMarketQuotat
     {
         m_pMarketQuotation = in_pMarketQuotationAPI;
         m_n1mKBars = 0;
-        m_n1mKBars4EMA1 = in_n1mKBars4EMA1;
-        m_n1mKBars4EMA2 = in_n1mKBars4EMA2;
-        m_n1mKBars4DEA = in_n1mKBars4DEA;
+        m_nBarsDIF = 9;
         m_strContract = in_strContract;
         m_arrayIndexValue.clear();
     }
@@ -70,7 +67,7 @@ int axapi::MQI_MACDIndex::initialize(axapi::MarketQuotationAPI *in_pMarketQuotat
 
 
     m_blAutoRun = true;
-    std::thread autorun(&MarketQuotationIndex::caculate, this);
+    std::thread autorun(&MQI_MACDIndex::caculate, this);
     autorun.detach();
     return 0;
 }
@@ -105,12 +102,10 @@ void axapi::MQI_MACDIndex::caculate()
     /*
     * 自定义指标计算部分
     */
-    double t_EMAValue1, t_EMAValue2, t_DIFValue, tDEAValue;
     MQI_MACDIndexField t_objLatestIndexValue;
     t_objLatestIndexValue.BarSerials = NULL;
     t_objLatestIndexValue.indexValue = NULL;
 
-    axapi::KMarketDataField *t_pMarketDataField = NULL;
     axapi::KMarketDataField *t_pMarketDataFieldLastest = NULL;
 
     while (m_blAutoRun)
@@ -119,52 +114,46 @@ void axapi::MQI_MACDIndex::caculate()
         //LOG4CPLUS_TRACE(m_objLogger, t_strLog);
 
         t_pMarketDataFieldLastest = m_pMarketQuotation->getKLine(t_strContract.c_str(), 1, 0);
+
         if (t_pMarketDataFieldLastest == NULL)
         {
             continue;
         }
-        for (int i = 0; i < m_n1mKBars; i++)
+        t_objLatestIndexValue.BarSerials = t_pMarketDataFieldLastest->BarSerials;
+
+        if (m_arrayIndexValue.size() >= 1)
         {
-            t_pMarketDataField = m_pMarketQuotation->getKLineBySerials(t_strContract.c_str(), 1, t_pMarketDataFieldLastest->BarSerials - i);
-            if (t_pMarketDataField != NULL)
-            {
-                if (t_pMarketDataField->ClosePrice - t_pMarketDataField->OpenPrice >= 0)
-                    t_ClosePriceSUM_Ascend += t_pMarketDataField->ClosePrice - t_pMarketDataField->OpenPrice;
-                else
-                    t_ClosePriceSUM_Descend += t_pMarketDataField->OpenPrice - t_pMarketDataField->ClosePrice;
-            }
-            else
-            {
-                break;
-            }
-        }
-        if (t_pMarketDataField == NULL)
-        {
-            continue;
-        }
-        else
-        {
-            /*
-            * 记录INDEX值
-            */
-            /// 如果当前计算的INDEX值的序号未变则更新
-            if (t_objLatestIndexValue.BarSerials == t_pMarketDataFieldLastest->BarSerials)
+            // BAR未前进到下一条则先清空已存数据
+            if (t_objLatestIndexValue.BarSerials == m_arrayIndexValue[m_arrayIndexValue.size() - 1].BarSerials)
             {
                 m_arrayIndexValue.pop_back();
             }
-            if (t_ClosePriceSUM_Ascend + t_ClosePriceSUM_Descend == 0)
-            {
-                t_objLatestIndexValue.BarSerials = t_pMarketDataFieldLastest->BarSerials;
-                t_objLatestIndexValue.indexValue = 0;
-                m_arrayIndexValue.push_back(t_objLatestIndexValue);
-            }
-            else
-            {
-                t_objLatestIndexValue.BarSerials = t_pMarketDataFieldLastest->BarSerials;
-                t_objLatestIndexValue.indexValue = t_ClosePriceSUM_Ascend / (t_ClosePriceSUM_Ascend + t_ClosePriceSUM_Descend) * 100;
-                m_arrayIndexValue.push_back(t_objLatestIndexValue);
-            }
         }
+
+        /// 当前计算不是第一个指标值
+        if (m_arrayIndexValue.size() >= 1)
+        {
+            t_objLatestIndexValue.EMA12Value = m_arrayIndexValue[m_arrayIndexValue.size() - 1].EMA12Value * 11 / 13 + t_pMarketDataFieldLastest->ClosePrice * 2 / 13;
+            t_objLatestIndexValue.EMA26Value = m_arrayIndexValue[m_arrayIndexValue.size() - 1].EMA26Value * 25 / 27 + t_pMarketDataFieldLastest->ClosePrice * 2 / 27;
+            t_objLatestIndexValue.DIFValue = t_objLatestIndexValue.EMA12Value - t_objLatestIndexValue.EMA26Value;
+            for (int i = 0; i < m_nBarsDIF && i < m_arrayIndexValue.size(); i++)
+            {
+                t_objLatestIndexValue.DEAValue = m_arrayIndexValue[m_arrayIndexValue.size() - 1 - i].DIFValue
+                    + 1 / (m_arrayIndexValue.size() < m_nBarsDIF ? m_arrayIndexValue.size() : m_nBarsDIF);
+            }
+            t_objLatestIndexValue.indexValue = t_objLatestIndexValue.DEAValue;
+        }
+        /// 当前计算为第一个指标值
+        else
+        {
+            t_objLatestIndexValue.EMA12Value = t_pMarketDataFieldLastest->ClosePrice * 2 / 13;
+            t_objLatestIndexValue.EMA26Value = t_pMarketDataFieldLastest->ClosePrice * 2 / 27;
+            t_objLatestIndexValue.DIFValue = t_objLatestIndexValue.EMA12Value - t_objLatestIndexValue.EMA26Value;
+            t_objLatestIndexValue.DEAValue = t_objLatestIndexValue.DIFValue;
+            t_objLatestIndexValue.indexValue = t_objLatestIndexValue.DEAValue;
+        }
+
+        m_arrayIndexValue.push_back(t_objLatestIndexValue);
 #pragma endregion
 
         Sleep(100);
