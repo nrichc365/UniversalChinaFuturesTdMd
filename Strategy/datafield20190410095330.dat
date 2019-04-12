@@ -1,5 +1,0 @@
-m_hashAllOrder[24]:OrderID(    40000722),OrderRef(24),OrderType(a),HoldTradeID(),updateOrderRoundSequence(2956)
-m_hashConfirmedOrder[    40000722]:Sequence(0)
-m_vConfirmedOrder[0]:OrderID(    40000722),HoldTradeID(),OrderRef(24),InsertTime(09:51:42),                            OrderStatus(0),OrderType(a),OrderPrice(645.000000),OrderVolumeTotal(0),                            OrderVolumeTraded(1),OrderVolumnOriginal(1),TradeIDList.size(0)
-m_hashConfirmedHoldTrade[    40000079]:Sequence(0)
-m_vConfirmedHoldTrade[0]:TradeID(    40000079),TradeStatus(97),InstrumentID(i1909),Direction(49),                            Price(645.000000),Volumn(1),OffsetVolumn(0),AvailableVolumn(1),                            SPOrderID(),SLOrderID.size(0)
