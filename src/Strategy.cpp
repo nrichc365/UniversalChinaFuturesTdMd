@@ -79,6 +79,7 @@ axapi::Strategy::Strategy(void)
     m_hUpdateTradeFinished = CreateEvent(NULL, true, false, NULL);
 
     m_nCancelWaitSeconds = 20;
+    m_nOrderingCheckWaitMillseconds = 1000;
     m_nUpdateOrderTimes = 0;
     m_nUpdateTradeTimes = 0;
 #ifdef STRATEGY_EXE
@@ -174,6 +175,15 @@ void axapi::Strategy::saveData()
         sprintf_s(t_strLog, sizeof(t_strLog), "m_hashUnpairedOffsetOrder[%s]:TradeID(%s),OrderRef(%s),OffsetOrderType(%c)", i->first.c_str(), i->second.TradeID, i->second.OrderRef, i->second.OffsetOrderType);
         t_pDataIntoFiles->writeData2File(t_strLog);
     }
+    /// 记录参数
+    sprintf_s(t_strLog, sizeof(t_strLog), "m_nUpdateOrderTimes:%d", m_nUpdateOrderTimes);
+    t_pDataIntoFiles->writeData2File(t_strLog);
+    sprintf_s(t_strLog, sizeof(t_strLog), "m_nUpdateTradeTimes:%d", m_nUpdateTradeTimes);
+    t_pDataIntoFiles->writeData2File(t_strLog);
+    sprintf_s(t_strLog, sizeof(t_strLog), "m_nOrderingCheckWaitMillseconds:%d", m_nOrderingCheckWaitMillseconds);
+    t_pDataIntoFiles->writeData2File(t_strLog);
+    sprintf_s(t_strLog, sizeof(t_strLog), "m_nCancelWaitSeconds:%d", m_nCancelWaitSeconds);
+    t_pDataIntoFiles->writeData2File(t_strLog);
 }
 
 void axapi::Strategy::loadData()
@@ -675,6 +685,7 @@ void axapi::Strategy::strategyOrder()
                 sprintf_s(t_strLog, sizeof(t_strLog), "%s:下单%s_%s", t_strLogFuncName, t_objOpenOrderRef, t_strOffsetMessage.c_str());
                 LOG4CPLUS_INFO(m_objLogger, t_strLog);
             }
+            Sleep(m_nOrderingCheckWaitMillseconds);
         }
     }
     catch (std::exception e)

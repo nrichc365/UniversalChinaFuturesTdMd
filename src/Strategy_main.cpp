@@ -1,4 +1,4 @@
-#define STRATEGY_EXE
+#define STRATEGY_EXP
 #define CTP_TRADEAPI
 //#define KSV6T_TRADEAPI
 #include "Strategy.h"
@@ -17,6 +17,7 @@ void main()
     //axapi::TradeAPI *p_tradeAPI = new axapi::TradeAPI("4500", "80005000336", "197913", "tcp://27.115.97.3:41205");
 #endif CTP_TRADEAPI
 
+#ifdef STRATEGY_EXE
     axapi::Strategy *t_strategy = new axapi::Strategy();
     if (t_strategy->initializeAPI(pmarketquotationapi, p_tradeAPI) == 0)
     {
@@ -32,5 +33,6 @@ void main()
     {
         std::cout << "error" << std::endl;
     }
+#endif STRATEGY_EXE
     Sleep(5000);
 }

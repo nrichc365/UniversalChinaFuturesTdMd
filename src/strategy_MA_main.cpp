@@ -1,20 +1,20 @@
 #define CTP_TRADEAPI
 //#define KSV6T_TRADEAPI
-#include "strategy_P8.h"
+#include "strategy_MA.h"
 #include "configRead_dll/readConfig.h"
 #include <iostream>
 #include <signal.h>
 
 #define OFFSETALL 'o'
 
-strategy_P8 *pSP8;
+strategy_MA *pSMA;
 bool g_blRunning;
 bool g_blWaitShutdown;
 void exitsignal(int t_signal);
 
 void main()
 {
-    pSP8 = NULL;
+    pSMA = NULL;
     g_blRunning = true;
     g_blWaitShutdown = true;
     signal(SIGINT, exitsignal);
@@ -52,20 +52,8 @@ void main()
     GetConfigString(INI_FILE, "Instrument", t_chInstrument, sizeof(t_chInstrument));
     t_nOffsetAllTime = atoi(t_OffsetAllTime);
 
-    char t_OffsetPriceDiff[100], t_OffsetPriceDiff2[100], t_ProfitFallOffsetValve[100], t_ProfitFallRate[100];
-    char t_strStrategy_PPP[5], t_strStrategy_PPN[5], t_strStrategy_PNP[5], t_strStrategy_PNN[5], t_strStrategy_NPP[5], t_strStrategy_NPN[5], t_strStrategy_NNP[5], t_strStrategy_NNN[5];
-    GetConfigString(INI_FILE, "OFFSETPRICEDIFF", t_OffsetPriceDiff, sizeof(t_OffsetPriceDiff));
-    GetConfigString(INI_FILE, "OFFSETPRICEDIFF2", t_OffsetPriceDiff2, sizeof(t_OffsetPriceDiff2));
-    GetConfigString(INI_FILE, "PROFITFALLOFFSETVALVE", t_ProfitFallOffsetValve, sizeof(t_ProfitFallOffsetValve));
-    GetConfigString(INI_FILE, "PROFITFALLRATE", t_ProfitFallRate, sizeof(t_ProfitFallRate));
-    GetConfigString(INI_FILE, "STRATEGY_PPP", t_strStrategy_PPP, sizeof(t_strStrategy_PPP));
-    GetConfigString(INI_FILE, "STRATEGY_PPN", t_strStrategy_PPN, sizeof(t_strStrategy_PPN));
-    GetConfigString(INI_FILE, "STRATEGY_PNP", t_strStrategy_PNP, sizeof(t_strStrategy_PNP));
-    GetConfigString(INI_FILE, "STRATEGY_PNN", t_strStrategy_PNN, sizeof(t_strStrategy_PNN));
-    GetConfigString(INI_FILE, "STRATEGY_NPP", t_strStrategy_NPP, sizeof(t_strStrategy_NPP));
-    GetConfigString(INI_FILE, "STRATEGY_NPN", t_strStrategy_NPN, sizeof(t_strStrategy_NPN));
-    GetConfigString(INI_FILE, "STRATEGY_NNP", t_strStrategy_NNP, sizeof(t_strStrategy_NNP));
-    GetConfigString(INI_FILE, "STRATEGY_NNN", t_strStrategy_NNN, sizeof(t_strStrategy_NNN));
+    char t_chProfitPoint2Offset[100];
+    GetConfigString(INI_FILE, "ProfitPoint2Offset", t_chProfitPoint2Offset, sizeof(t_chProfitPoint2Offset));
 
     signal(SIGINT, exitsignal);
     signal(SIGTERM, exitsignal);
@@ -80,10 +68,10 @@ void main()
     */
     axapi::TradeAPI* t_tradeapi = new axapi::TradeAPI(t_BrokerNO, t_CustNo, t_CustPass, t_TradeServerADDR);
 
-    pSP8 = new strategy_P8(t_chInstrument, atoi(t_CancelWaitSeconds), 1000, t_strStrategy_PPP, t_strStrategy_PPN, t_strStrategy_PNP, t_strStrategy_PNN, t_strStrategy_NPP, t_strStrategy_NPN, t_strStrategy_NNP, t_strStrategy_NNN, atoi(t_SleepTime) * 1000, atoi(t_OffsetPriceDiff), atoi(t_OffsetPriceDiff2), atoi(t_ProfitFallOffsetValve), atof(t_ProfitFallRate));
-    if (pSP8->initializeAPISub(t_marketapi, t_tradeapi) == 0)
+    pSMA = new strategy_MA(t_chInstrument, atoi(t_CancelWaitSeconds), atoi(t_SleepTime) * 1000, atoi(t_chProfitPoint2Offset));
+    if (pSMA->initializeAPISub(t_marketapi, t_tradeapi) == 0)
     {
-        pSP8->start();
+        pSMA->start();
         while (g_blRunning)
         {
             time_t nowtime = time(NULL);
@@ -108,10 +96,10 @@ void main()
 void exitsignal(int t_signal)
 {
     g_blRunning = false;
-    if (pSP8 != NULL)
+    if (pSMA != NULL)
     {
-        pSP8->stop();
-        pSP8 = NULL;
+        pSMA->stop();
+        pSMA = NULL;
     }
     g_blWaitShutdown = false;
 }

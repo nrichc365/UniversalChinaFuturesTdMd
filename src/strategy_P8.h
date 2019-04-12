@@ -8,12 +8,12 @@ class strategy_P8 :
     public axapi::Strategy
 {
 private:
-    axapi::MarketDataField m_objFormerPrice1, m_objFormerPrice2;
     APINamespace CThostFtdcInstrumentField m_objInstrumentInfo;
     axapi::MarketDataField *m_pCurrentPrice;
     axapi::UniversalChinaFutureTdInstrumentIDType m_chInstrument;
 
     /// 策略下单配置
+    axapi::MarketDataField m_objFormerPrice1, m_objFormerPrice2;
     char m_chStrategy_PPP[5];
     char m_chStrategy_PPN[5];
     char m_chStrategy_PNP[5];
@@ -43,8 +43,10 @@ protected:
     /// TODO:预埋单价位获得
     void getPreOffsetPrice(struct axapi::ConfirmedHoldTrade in_objHoldTrade, bool *ot_blSPOffsetFlag, double *ot_dbSPOffsetPrice);
 public:
-    strategy_P8(char *in_chInstrument, int in_nCancelWaitSeconds, char *in_chPPPDirection, char *in_chPPNDirection, char *in_chPNPDirection, char *in_chPNNDirection, char *in_chNPPDirection, char *in_chNPNDirection, char *in_chNNPDirection, char *in_chNNNDirection, int in_nOffsetInterval = INT_MAX, int in_nOffsetPriceDiff = INT_MAX, int in_nOffsetPriceDiff2 = INT_MAX, int in_nProfitFallOffsetValve = INT_MAX, double in_dbProfitFallRate = 1);
+    strategy_P8(char *in_chInstrument, int in_nCancelWaitSeconds, int in_nOrderingCheckWaitMillseconds, char *in_chPPPDirection, char *in_chPPNDirection, char *in_chPNPDirection, char *in_chPNNDirection, char *in_chNPPDirection, char *in_chNPNDirection, char *in_chNNPDirection, char *in_chNNNDirection, int in_nOffsetInterval = INT_MAX, int in_nOffsetPriceDiff = INT_MAX, int in_nOffsetPriceDiff2 = INT_MAX, int in_nProfitFallOffsetValve = INT_MAX, double in_dbProfitFallRate = 1);
     ~strategy_P8();
+    /// 初始化行情与交易接口
+    int initializeAPISub(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
 };
 
 #endif _STRATEGY_P8_H_

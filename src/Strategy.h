@@ -142,14 +142,20 @@ namespace axapi
         /// 设置接口
         int setAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
 #ifndef STRATEGY_EXE
+        /// 初始化行情与交易接口
+        int initializeAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
+#endif STRATEGY_EXE
+#ifndef STRATEGY_EXE
         /// 用于继承类日志,初始化必须设置
         log4cplus::Logger m_objLoggerSub;
         /// TODO:初始化日志文件 { m_objLoggerSub = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("SUBStrategyNAME")); }
         virtual int initializeSubLog() = 0;
 #endif STRATEGY_EXE
     public:
+#ifdef STRATEGY_EXE
         /// 初始化行情与交易接口
         int initializeAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
+#endif STRATEGY_EXE
         /// 初始化
         Strategy(void);
         ~Strategy(void);
@@ -250,6 +256,7 @@ namespace axapi
     protected:
         /// 策略参数:撤单等待秒数
         unsigned int m_nCancelWaitSeconds;
+        unsigned int m_nOrderingCheckWaitMillseconds;
 #ifdef STRATEGY_EXE
         int m_nOpenCount;
         /// TODO:策略主体

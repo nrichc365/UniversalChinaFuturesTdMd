@@ -1,15 +1,26 @@
 #define CTP_TRADEAPI
+#define LOGGER_NAME "strategy_P8"
 //#define KSV6T_TRADEAPI
 #include "strategy_P8.h"
 
-strategy_P8::strategy_P8(char * in_chInstrument, int in_nCancelWaitSeconds, char * in_chPPPDirection, char * in_chPPNDirection, char * in_chPNPDirection, char * in_chPNNDirection, char * in_chNPPDirection, char * in_chNPNDirection, char * in_chNNPDirection, char * in_chNNNDirection, int in_nOffsetInterval, int in_nOffsetPriceDiff, int in_nOffsetPriceDiff2, int in_nProfitFallOffsetValve, double in_dbProfitFallRate)
+strategy_P8::strategy_P8(char * in_chInstrument, int in_nCancelWaitSeconds, int in_nOrderingCheckWaitMillseconds, char * in_chPPPDirection, char * in_chPPNDirection, char * in_chPNPDirection, char * in_chPNNDirection, char * in_chNPPDirection, char * in_chNPNDirection, char * in_chNNPDirection, char * in_chNNNDirection, int in_nOffsetInterval, int in_nOffsetPriceDiff, int in_nOffsetPriceDiff2, int in_nProfitFallOffsetValve, double in_dbProfitFallRate)
 {
+    if (initializeSubLog() == 0)
+    {
+        LOG4CPLUS_FATAL(m_objLoggerSub, "initialize LOG OK");
+    }
+    else
+    {
+        LOG4CPLUS_FATAL(m_objLoggerSub, ":initialize LOG ERROR");
+    }
+
     memset(&m_objFormerPrice1, '\0', sizeof(m_objFormerPrice1));
     memset(&m_objFormerPrice2, '\0', sizeof(m_objFormerPrice2));
     memset(&m_objInstrumentInfo, '\0', sizeof(m_objInstrumentInfo));
     m_pCurrentPrice = NULL;
     strcpy_s(m_chInstrument, sizeof(m_chInstrument), in_chInstrument);
     m_nCancelWaitSeconds = in_nCancelWaitSeconds;
+    m_nOrderingCheckWaitMillseconds = in_nOrderingCheckWaitMillseconds;
     strcpy_s(m_chStrategy_PPP, sizeof(m_chStrategy_PPP), in_chPPPDirection);
     strcpy_s(m_chStrategy_PPN, sizeof(m_chStrategy_PPN), in_chPPNDirection);
     strcpy_s(m_chStrategy_PNP, sizeof(m_chStrategy_PNP), in_chPNPDirection);
@@ -23,23 +34,36 @@ strategy_P8::strategy_P8(char * in_chInstrument, int in_nCancelWaitSeconds, char
     m_nOffsetPriceDiff2 = in_nOffsetPriceDiff2;
     m_nOffsetInterval = in_nOffsetInterval;
     m_dbProfitFallRate = in_dbProfitFallRate;
-    while (m_objInstrumentInfo.InstrumentID[0] == '\0')
-    {
-        m_objInstrumentInfo = m_pTrade->getInstrumentInfo(m_chInstrument);
-    }
-    while (m_pCurrentPrice == NULL)
-    {
-        m_pCurrentPrice = m_pMarketQuotation->getCurrentPrice(m_chInstrument);
-    }
 }
 
 strategy_P8::~strategy_P8()
 {
 }
 
+int strategy_P8::initializeAPISub(axapi::MarketQuotationAPI* in_pMarketQuotationAPI, axapi::TradeAPI* in_pTradeAPI)
+{
+    if (this->initializeAPI(in_pMarketQuotationAPI, in_pTradeAPI) == 0)
+    {
+        m_pMarketQuotation->subMarketDataSingle(m_chInstrument);
+        while (m_objInstrumentInfo.InstrumentID[0] == '\0')
+        {
+            m_objInstrumentInfo = m_pTrade->getInstrumentInfo(m_chInstrument);
+        }
+        while (m_pCurrentPrice == NULL)
+        {
+            m_pCurrentPrice = m_pMarketQuotation->getCurrentPrice(m_chInstrument);
+        }
+        return 0;
+    }
+    else
+    {
+        return -100;
+    }
+}
+
 int strategy_P8::initializeSubLog()
 {
-    m_objLoggerSub = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("strategy_P8"));
+    m_objLoggerSub = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT(LOGGER_NAME));
     return 0;
 }
 
@@ -49,13 +73,14 @@ void strategy_P8::myStrategy(bool *ot_blOpenFlag, std::string *ot_strOpenMsg, ch
     char t_strLog[500];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
 
-    double t_PriceChange, t_VolumeChange, t_OpenInterestChange;
     *ot_blOpenFlag = false;
 
     if (m_pCurrentPrice != NULL)
     {
+        double t_PriceChange, t_VolumeChange, t_OpenInterestChange;
         axapi::MarketDataField t_objCurrentPrice;
         memcpy_s(&t_objCurrentPrice, sizeof(t_objCurrentPrice), m_pCurrentPrice, sizeof(t_objCurrentPrice));
+
         if (m_objFormerPrice1.LastPrice == 0)
         {
             m_objFormerPrice1.LastPrice = t_objCurrentPrice.LastPrice;
@@ -255,7 +280,7 @@ void strategy_P8::myStrategy(bool *ot_blOpenFlag, std::string *ot_strOpenMsg, ch
 
 void strategy_P8::myOffsetStrategy(axapi::ConfirmedHoldTrade in_objHoldTrade, bool *ot_blOffsetFlag, std::string *ot_strOffsetMsg)
 {
-    char* t_strLogFuncName = "Strategy::myOffsetStrategy";
+    char* t_strLogFuncName = "strategy_P8::myOffsetStrategy";
     char t_strLog[500];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
 
@@ -371,7 +396,7 @@ void strategy_P8::myOffsetStrategy(axapi::ConfirmedHoldTrade in_objHoldTrade, bo
 
 void strategy_P8::getPreOffsetPrice(axapi::ConfirmedHoldTrade in_objHoldTrade, bool *ot_blSPOffsetFlag, double *ot_dbSPOffsetPrice)
 {
-    char* t_strLogFuncName = "Strategy::getPreOffsetPrice";
+    char* t_strLogFuncName = "strategy_P8::getPreOffsetPrice";
     char t_strLog[500];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
 
