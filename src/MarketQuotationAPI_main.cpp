@@ -11,11 +11,12 @@ void main()
     axapi::MarketQuotationAPI *pmarketquotationapi = new axapi::MarketQuotationAPI("6C2D786C", "8000100078", "131", "tcp://10.6.3.183:17993");
 #endif KSV6T_TRADEAPI
 #ifdef CTP_TRADEAPI
-    axapi::MarketQuotationAPI *pmarketquotationapi = new axapi::MarketQuotationAPI("4500", "21001", "gtax@1", "tcp://10.6.7.80:41213");
+    axapi::MarketQuotationAPI *pmarketquotationapi = new axapi::MarketQuotationAPI("4580", "8000500200", "800050", "tcp://139.129.108.145:21213");
+    //axapi::MarketQuotationAPI *pmarketquotationapi = new axapi::MarketQuotationAPI("4500", "21001", "gtax@1", "tcp://10.6.7.80:41213");
 #endif CTP_TRADEAPI
     //Sleep(1000);
     std::cout << "123" << std::endl;
-    pmarketquotationapi->subMarketDataSingle("AP1905");
+    pmarketquotationapi->subMarketDataSingle("rb1905");
     std::cout << "234" << std::endl;
     //pmarketquotationapi->subMarketDataSingle("rb1902");
     //pmarketquotationapi->subMarketDataSingle("rb1903");
@@ -54,8 +55,8 @@ void main()
     while(true)
     {
 
-        axapi::MarketDataField* pMarketData = pmarketquotationapi->getCurrentPrice("AP1905");
-        std::cout << pmarketquotationapi->getCurrPrice("AP1905") << ":";
+        axapi::MarketDataField* pMarketData = pmarketquotationapi->getCurrentPrice("rb1905");
+        std::cout << pmarketquotationapi->getCurrPrice("rb1905") << ":";
         std::cout << pMarketData->InstrumentID << "|" << pMarketData->AskPrice1 << "|" << pMarketData->BidPrice1
             << "|" << pMarketData->Turnover << "|" << pMarketData->OpenInterest << "|" << pMarketData->LastPrice
             << "|" << pMarketData->Volume

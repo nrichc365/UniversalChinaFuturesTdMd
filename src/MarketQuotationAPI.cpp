@@ -15,6 +15,7 @@
 #define BARNUMBER_60MIN    10        //60分钟K线根数
 #define TRADINGTIMELINETYPE 1        //时间轴数量
 #define TRADINGTIMELINEMIN  1095      //时间轴上时间点数量
+#define LOGGER_NAME "MarketQuotationAPI"
 #include "MarketQuotationAPI.h"
 #include <iostream>
 #include <fstream>
@@ -27,6 +28,10 @@ axapi::MarketQuotationAPI::MarketQuotationAPI(void)
     {
         //LOG4CPLUS_FATAL(m_root, "initialize LOG OK");
         LOG4CPLUS_FATAL(m_objLogger, "initialize LOG OK");
+    }
+    else
+    {
+        LOG4CPLUS_FATAL(m_objLogger, "initialize LOG ERROR");
     }
     m_nRecievedDataCount = 0;
     m_nDCETimeDiff = 0;
@@ -48,6 +53,10 @@ axapi::MarketQuotationAPI::MarketQuotationAPI(
     {
         //LOG4CPLUS_FATAL(m_root, "initialize LOG OK");
         LOG4CPLUS_FATAL(m_objLogger, "initialize LOG OK");
+    }
+    else
+    {
+        LOG4CPLUS_FATAL(m_objLogger, "initialize LOG ERROR");
     }
     m_nRecievedDataCount = 0;
     m_nDCETimeDiff = 0;
@@ -391,7 +400,7 @@ int axapi::MarketQuotationAPI::initializeLog()
     log4cplus::initialize();
     log4cplus::helpers::LogLog::getLogLog()->setInternalDebugging(true);
     m_root = log4cplus::Logger::getRoot();
-    m_objLogger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("MarketQuotationAPI"));
+    m_objLogger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT(LOGGER_NAME));
     try {
         log4cplus::ConfigureAndWatchThread configureThread(
             LOG4CPLUS_TEXT("log4cplus.properties"), 5 * 1000);

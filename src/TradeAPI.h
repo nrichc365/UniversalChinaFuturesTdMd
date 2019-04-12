@@ -146,8 +146,8 @@ namespace axapi
         int queryMarketData(char* in_strContract);
         /// 获取queryMarketData所查询得到的合约的最新行情
         APINamespace CThostFtdcDepthMarketDataField getLatestPrice();
-        /// 下单 返回Requestid,参数依次为in_strContract合约、in_nDirection方向、in_nOffsetFlag开平标志、in_nOrderTypeFlag报单类型、in_nOrderAmount报单数量、in_dOrderPrice报单价格
-        int MyOrdering(char* in_strContract, int in_nDirection, int in_nOffsetFlag, int in_nOrderTypeFlag, int in_nOrderAmount, double in_dOrderPrice);
+        /// 下单 返回Requestid,参数依次为in_strContract合约、in_nDirection方向、in_nOffsetFlag开平标志、in_nOrderTypeFlag报单类型、in_nOrderAmount报单数量、in_dOrderPrice报单价格、in_plOrderRef引用指针
+        int MyOrdering(char* in_strContract, int in_nDirection, int in_nOffsetFlag, int in_nOrderTypeFlag, int in_nOrderAmount, double in_dOrderPrice, long *in_plOrderRef = NULL);
         /// 撤单 in_OrderSysID为委托号,需要通过查询m_vOrderList获得
         int MyCancelOrder(char* in_OrderSysID);
 #pragma endregion
