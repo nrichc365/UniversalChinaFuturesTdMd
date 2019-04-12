@@ -40,10 +40,10 @@ namespace axapi
         double indexValue;
         /// 当日第几根K线
         int BarSerials;
-        /// EMA1
-        double EMA1Value;
-        /// EMA2
-        double EMA2Value;
+        /// EMA12
+        double EMA12Value;
+        /// EMA26
+        double EMA26Value;
         /// DIF
         double DIFValue;
         /// DEA DEM
@@ -56,13 +56,11 @@ namespace axapi
     public:
         MQI_MACDIndex();
         ~MQI_MACDIndex();
-        int initialize(axapi::MarketQuotationAPI*, unsigned int, unsigned int, unsigned int, std::string);
+        int initialize(axapi::MarketQuotationAPI*, std::string);
         /// 获得指定位置的指标值 错误返回NULL
         double getIndexValue(int in_iCurrentOffset = 0);
     private:
-        int m_n1mKBars4EMA1;
-        int m_n1mKBars4EMA2;
-        int m_n1mKBars4DEA;
+        unsigned int m_nBarsDIF;
         /// 指标序列
         std::vector<MQI_MACDIndexField> m_arrayIndexValue;
         /// 计算入口 重新定义为RSI

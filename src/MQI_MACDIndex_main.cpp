@@ -8,10 +8,11 @@ void main(void)
     t_pMarketQuotation->subMarketDataSingle("rb1905");
 
     axapi::MQI_MACDIndex *t_pMQI_MACDIndex = new axapi::MQI_MACDIndex();
-    t_pMQI_MACDIndex->initialize(t_pMarketQuotation, 7, "rb1905");
+    t_pMQI_MACDIndex->initialize(t_pMarketQuotation, "rb1905");
 
     double t_dbIndexValue = NULL;
-    for (int i = 0; i <= 5; i++)
+    while (true)
+        //for (int i = 0; i <= 5; i++)
     {
         t_dbIndexValue = t_pMQI_MACDIndex->getIndexValue();
         if (t_dbIndexValue == NULL)
@@ -25,19 +26,18 @@ void main(void)
         Sleep(3000);
     }
 
-    //t_pMQI_MACDIndex->initialize(t_pMarketQuotation, 4, "rb1907");
+    /*t_pMQI_MACDIndex->initialize(t_pMarketQuotation, 4, "rb1907");
     for (int i = 0; i <= 5; i++)
     {
-        t_dbIndexValue = t_pMQI_MACDIndex->getIndexValue();
-        if (t_dbIndexValue == NULL)
-        {
-            std::cout << "no index value" << std::endl;
-        }
-        else
-        {
-            std::cout << t_dbIndexValue << std::endl;
-        }
-        Sleep(3000);
+    t_dbIndexValue = t_pMQI_MACDIndex->getIndexValue();
+    if (t_dbIndexValue == NULL)
+    {
+    std::cout << "no index value" << std::endl;
     }
-
+    else
+    {
+    std::cout << t_dbIndexValue << std::endl;
+    }
+    Sleep(3000);
+    }*/
 }

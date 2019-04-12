@@ -118,7 +118,7 @@ void axapi::MQI_KDJRandomIndex::caculate()
 
             t_objLatestIndexValue.BarSerials = t_pMarketDataFieldLastest->BarSerials;
             t_objLatestIndexValue.RSVValue = (t_HighestPrice - t_LowestPrice) == 0 ? 100 : (t_ClosePrice - t_LowestPrice) / (t_HighestPrice - t_LowestPrice) * 100;
-            if (m_arrayIndexValue[m_arrayIndexValue.size() - 1].BarSerials == t_pMarketDataFieldLastest->BarSerials - 1)
+            if (m_arrayIndexValue.size() > 0 && m_arrayIndexValue[m_arrayIndexValue.size() - 1].BarSerials == t_pMarketDataFieldLastest->BarSerials - 1)
             {
                 t_objLatestIndexValue.KValue = m_arrayIndexValue[m_arrayIndexValue.size() - 1].KValue * 2 / 3 + t_objLatestIndexValue.RSVValue * 1 / 3;
                 t_objLatestIndexValue.DValue = m_arrayIndexValue[m_arrayIndexValue.size() - 1].DValue * 2 / 3 + t_objLatestIndexValue.KValue * 1 / 3;
