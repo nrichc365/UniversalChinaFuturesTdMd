@@ -19,7 +19,7 @@ void main()
 
 #ifdef STRATEGY_EXE
     axapi::Strategy *t_strategy = new axapi::Strategy();
-    if (t_strategy->initializeAPI(pmarketquotationapi, p_tradeAPI) == 0)
+    if (t_strategy->initializeAPISub(pmarketquotationapi, p_tradeAPI) == 0)
     {
         t_strategy->start();
         for (int i = 0; i < 50; i++)

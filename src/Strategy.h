@@ -121,6 +121,15 @@ namespace axapi
     };
 
     /// 策略接口
+    /*
+    * 继承类需要实现行情订阅,否则无法正常交易
+    * 继承类需要实现myStrategy用于开仓策略
+    * 继承类需要实现myOffsetStrategy用于平仓策略
+    * 继承类需要实现myCancelStrategy用于撤单策略
+    * 继承类需要实现getPreOffsetPrice用于指定止盈价位
+    * 继承类需要实现initializeSubLog初始化日志
+    * 继承类需要实现initializeAPISub初始化接口并订阅行情
+    */
     class STRATEGY_EXPORT Strategy
     {
         /*
@@ -141,9 +150,11 @@ namespace axapi
         axapi::TradeAPI *m_pTrade;
         /// 设置接口
         int setAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
-#ifndef STRATEGY_EXE
         /// 初始化行情与交易接口
         int initializeAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
+#ifndef STRATEGY_EXE
+        /// TODO:初始化行情与交易接口
+        virtual int initializeAPISub(axapi::MarketQuotationAPI*, axapi::TradeAPI*) = 0;
 #endif STRATEGY_EXE
 #ifndef STRATEGY_EXE
         /// 用于继承类日志,初始化必须设置
@@ -154,7 +165,7 @@ namespace axapi
     public:
 #ifdef STRATEGY_EXE
         /// 初始化行情与交易接口
-        int initializeAPI(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
+        int initializeAPISub(axapi::MarketQuotationAPI*, axapi::TradeAPI*);
 #endif STRATEGY_EXE
         /// 初始化
         Strategy(void);
@@ -251,12 +262,13 @@ namespace axapi
         bool strategyHoldCompare();
         /// 运行数据保存
         void saveData();
-        /// 加载存量运行数据
+        /// 加载存量运行数据：目前用于测试
         void loadData();
     protected:
         /// 策略参数:撤单等待秒数
         unsigned int m_nCancelWaitSeconds;
         unsigned int m_nOrderingCheckWaitMillseconds;
+
 #ifdef STRATEGY_EXE
         int m_nOpenCount;
         /// TODO:策略主体
@@ -265,14 +277,20 @@ namespace axapi
         void myOffsetStrategy(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blOffsetFlag, std::string *ot_strOffsetMsg);
         /// TODO:预埋单价位获得
         void getPreOffsetPrice(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blSPOffsetFlag, double *ot_dbSPOffsetPrice);
+        /// TODO:撤单策略主体
+        void myCancelStrategy(struct ConfirmedOrder in_objOrder, bool *ot_blCancelFlag, std::string *ot_strCancelMsg);
+        /// 策略进程:独立进程,主要用于策略内信息的更新
+        void myUpdateStrategyInfo() { return; };
 #endif STRATEGY_EXE
 #ifndef STRATEGY_EXE
-        /// TODO:策略主体
+        /// TODO:开仓策略主体
         virtual void myStrategy(bool *ot_blOpenFlag, std::string *ot_strOpenMsg, char *ot_strContract, int *ot_nDirection, int *ot_nOffsetFlag, int *ot_nOrderTypeFlag, int *ot_nOrderAmount, double *ot_dOrderPrice) = 0;
-        /// TODO:平仓主体
+        /// TODO:平仓策略主体
         virtual void myOffsetStrategy(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blOffsetFlag, std::string *ot_strOffsetMsg) = 0;
         /// TODO:预埋单价位获得
         virtual void getPreOffsetPrice(struct ConfirmedHoldTrade in_objHoldTrade, bool *ot_blSPOffsetFlag, double *ot_dbSPOffsetPrice) = 0;
+        /// TODO:撤单策略主体
+        virtual void myCancelStrategy(struct ConfirmedOrder in_objOrder, bool *ot_blCancelFlag, std::string *ot_strCancelMsg) = 0;
 #endif STRATEGY_EXE
     public:
 #pragma endregion

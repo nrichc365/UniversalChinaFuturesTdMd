@@ -69,6 +69,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "strategy_P8", "strategyAPP\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "strategy_MA", "strategyAPP\strategy_MA\strategy_MA.vcxproj", "{3E1ACB80-0208-4479-8076-F6AE1961965D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "strategy_Arbitrage2i", "strategyAPP\strategy_Arbitrage2i\strategy_Arbitrage2i.vcxproj", "{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -189,6 +191,14 @@ Global
 		{3E1ACB80-0208-4479-8076-F6AE1961965D}.Release|x64.Build.0 = Release|x64
 		{3E1ACB80-0208-4479-8076-F6AE1961965D}.Release|x86.ActiveCfg = Release|Win32
 		{3E1ACB80-0208-4479-8076-F6AE1961965D}.Release|x86.Build.0 = Release|Win32
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}.Debug|x64.ActiveCfg = Debug|x64
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}.Debug|x64.Build.0 = Debug|x64
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}.Debug|x86.ActiveCfg = Debug|Win32
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}.Debug|x86.Build.0 = Debug|Win32
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}.Release|x64.ActiveCfg = Release|x64
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}.Release|x64.Build.0 = Release|x64
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}.Release|x86.ActiveCfg = Release|Win32
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -202,5 +212,6 @@ Global
 		{9735089C-186E-4FCC-8010-10ED66A7398E} = {44A7C661-837A-479C-BA99-72BA0E85A110}
 		{E08BB14A-56C8-4ED8-B7BD-53DF68096792} = {64A836CC-B39B-4F27-AFC0-E4526FCEDB5E}
 		{3E1ACB80-0208-4479-8076-F6AE1961965D} = {64A836CC-B39B-4F27-AFC0-E4526FCEDB5E}
+		{684FF5E8-1FD7-464E-9EF8-3BBA922C74E6} = {64A836CC-B39B-4F27-AFC0-E4526FCEDB5E}
 	EndGlobalSection
 EndGlobal

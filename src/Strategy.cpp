@@ -32,6 +32,13 @@ int axapi::Strategy::initializeAPI(axapi::MarketQuotationAPI *in_pMarketQuotatio
     return setAPI(in_pMarketQuotation, in_pTrade);
 }
 
+#ifdef STRATEGY_EXE
+int axapi::Strategy::initializeAPISub(axapi::MarketQuotationAPI *in_pMarketQuotation, axapi::TradeAPI *in_pTrade)
+{
+    return initializeAPI(in_pMarketQuotation, in_pTrade);
+}
+#endif STRATEGY_EXE
+
 int axapi::Strategy::setAPI(axapi::MarketQuotationAPI *in_pMarketQuotation, axapi::TradeAPI *in_pTrade)
 {
     char *t_strLogFuncName = "Strategy::setAPI";
@@ -894,7 +901,8 @@ void axapi::Strategy::strategyCancelOrder()
     char t_OrderInfoMinutes[3];
     char t_OrderInfoSeconds[3];
     //是否撤单标志
-    bool t_CancelAction;
+    bool t_blCancelAction;
+    std::string t_strCancelMsg;
 
     try
     {
@@ -910,119 +918,131 @@ void axapi::Strategy::strategyCancelOrder()
                 case THOST_FTDC_OST_PartTradedQueueing:
                 case THOST_FTDC_OST_NoTradeQueueing:
                 {
-                    /// 预埋止盈单跳过
-                    if (m_vConfirmedOrder[i].OrderType == OrderStatus_SPOffset)
+                    t_blCancelAction = false;
+                    myCancelStrategy(m_vConfirmedOrder[i], &t_blCancelAction, &t_strCancelMsg);
+                    /// 如果策略撤单判定为撤单则立刻进行撤单，否则进行默认后续处理
+                    if (t_blCancelAction)
                     {
-                        continue;
+                        /// 撤单:只报入,如果撤单有误,则交给下一次轮循处理
+                        m_pTrade->MyCancelOrder(m_vConfirmedOrder[i].OrderID);
                     }
-                    /// 止损单重新下单
-                    else if (m_vConfirmedOrder[i].OrderType == OrderStatus_SLOffset || m_vConfirmedOrder[i].OrderType == OrderStatus_Open)
+                    /// 如果策略撤单判定已进行撤单则不进行后续默认处理
+                    else
                     {
-                        /*
-                        * 是否撤单
-                        * 1.n秒撤单
-                        */
+                        /// 预埋止盈单跳过
+                        if (m_vConfirmedOrder[i].OrderType == OrderStatus_SPOffset)
+                        {
+                            continue;
+                        }
+                        /// 止损单重新下单
+                        else if (m_vConfirmedOrder[i].OrderType == OrderStatus_SLOffset || m_vConfirmedOrder[i].OrderType == OrderStatus_Open)
+                        {
+                            /*
+                            * 是否撤单
+                            * 1.n秒撤单
+                            */
 #pragma region
-                        nowtime = time(NULL);
-                        curtime = localtime(&nowtime);
-                        t_OrderInfoHour[0] = m_vConfirmedOrder[i].InsertTime[0];
-                        t_OrderInfoHour[1] = m_vConfirmedOrder[i].InsertTime[1];
-                        t_OrderInfoHour[2] = '\0';
-                        t_OrderInfoMinutes[0] = m_vConfirmedOrder[i].InsertTime[3];
-                        t_OrderInfoMinutes[1] = m_vConfirmedOrder[i].InsertTime[4];
-                        t_OrderInfoMinutes[2] = '\0';
-                        t_OrderInfoSeconds[0] = m_vConfirmedOrder[i].InsertTime[6];
-                        t_OrderInfoSeconds[1] = m_vConfirmedOrder[i].InsertTime[7];
-                        t_OrderInfoSeconds[2] = '\0';
-                        if (curtime->tm_hour < 20)
-                        {
-                            curMinutes = (curtime->tm_hour + 24) * 3600 + curtime->tm_min * 60 + curtime->tm_sec * 1;
-                        }
-                        else
-                        {
-                            curMinutes = (curtime->tm_hour + 0) * 3600 + curtime->tm_min * 60 + curtime->tm_sec * 1;
-                        }
-                        if (atoi(t_OrderInfoHour) < 20)
-                        {
-                            t_OrderInsertTime = (atoi(t_OrderInfoHour) + 24) * 3600 + atoi(t_OrderInfoMinutes) * 60 + atoi(t_OrderInfoSeconds);
-                        }
-                        else
-                        {
-                            t_OrderInsertTime = (atoi(t_OrderInfoHour) + 0) * 3600 + atoi(t_OrderInfoMinutes) * 60 + atoi(t_OrderInfoSeconds);
-                        }
-                        sprintf_s(t_strLog, sizeof(t_strLog), "%s:curMinutes:%d,|%d:%d:%d", t_strLogFuncName, curMinutes, curtime->tm_hour, curtime->tm_min, curtime->tm_sec);
-                        LOG4CPLUS_TRACE(m_objLogger, t_strLog);
-                        sprintf_s(t_strLog, sizeof(t_strLog), "%s:m_vConfirmedOrder[%d]:%d,%s|%s|%s|%s:%s:%s", t_strLogFuncName, i, t_OrderInsertTime, m_vConfirmedOrder[i].OrderID, m_vConfirmedOrder[i].OrderRef, m_vConfirmedOrder[i].InsertTime, t_OrderInfoHour, t_OrderInfoMinutes, t_OrderInfoSeconds);
-                        LOG4CPLUS_TRACE(m_objLogger, t_strLog);
-                        sprintf_s(t_strLog, sizeof(t_strLog), "%s:m_vConfirmedOrder[%d](%s):curMinutes:%d,t_OrderInsertTime:%d,m_nCancelWaitSeconds:%d", t_strLogFuncName, i, m_vConfirmedOrder[i].OrderID, curMinutes, t_OrderInsertTime, m_nCancelWaitSeconds);
-                        LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
-
-                        if (curMinutes - t_OrderInsertTime >= m_nCancelWaitSeconds)
-                        {
-                            t_CancelAction = true;
-                            sprintf_s(t_strLog, sizeof(t_strLog), "%s:撤单m_vConfirmedOrder[%d](%s)", t_strLogFuncName, i, m_vConfirmedOrder[i].OrderID);
-                            LOG4CPLUS_INFO(m_objLogger, t_strLog);
-                        }
-                        else
-                        {
-                            t_CancelAction = false;
-                        }
-#pragma endregion
-                        if (t_CancelAction)
-                        {
-                            /// 撤单
-                            bool t_blCanelNOSPOrder = true;
-                            while (t_blCanelNOSPOrder)
+                            nowtime = time(NULL);
+                            curtime = localtime(&nowtime);
+                            t_OrderInfoHour[0] = m_vConfirmedOrder[i].InsertTime[0];
+                            t_OrderInfoHour[1] = m_vConfirmedOrder[i].InsertTime[1];
+                            t_OrderInfoHour[2] = '\0';
+                            t_OrderInfoMinutes[0] = m_vConfirmedOrder[i].InsertTime[3];
+                            t_OrderInfoMinutes[1] = m_vConfirmedOrder[i].InsertTime[4];
+                            t_OrderInfoMinutes[2] = '\0';
+                            t_OrderInfoSeconds[0] = m_vConfirmedOrder[i].InsertTime[6];
+                            t_OrderInfoSeconds[1] = m_vConfirmedOrder[i].InsertTime[7];
+                            t_OrderInfoSeconds[2] = '\0';
+                            if (curtime->tm_hour < 20)
                             {
-                                switch (m_vConfirmedOrder[i].OrderStatus)
-                                {
-                                case THOST_FTDC_OST_PartTradedQueueing:
-                                case THOST_FTDC_OST_NoTradeQueueing:
-                                    m_pTrade->MyCancelOrder(m_vConfirmedOrder[i].OrderID);
-                                    Sleep(100);
-                                    break;
-                                default:
-                                    t_blCanelNOSPOrder = false;
-                                    break;
-                                }
+                                curMinutes = (curtime->tm_hour + 24) * 3600 + curtime->tm_min * 60 + curtime->tm_sec * 1;
                             }
-
-                            /// ERROR 更新不及时，导致撤不可撤单。后续报单平错误持仓
-
-                            /// 如果是止损平仓报单则继续报入,开仓不做处理
-                            if (m_vConfirmedOrder[i].OrderType == OrderStatus_SLOffset)
+                            else
                             {
-                                UniversalChinaFutureTdOrderRefType t_objSLOrderRef;
-                                long t_lSLOrderRef;
-                                m_pTrade->MyOrdering(m_vConfirmedHoldTrade[m_hashConfirmedHoldTrade[m_vConfirmedOrder[i].HoldTradeID]].InstrumentID,
-                                    m_vConfirmedHoldTrade[m_hashConfirmedHoldTrade[m_vConfirmedOrder[i].HoldTradeID]].Direction == THOST_FTDC_D_Buy ? ORDER_DIRECTION_SELL : ORDER_DIRECTION_BUY,
-                                    ORDER_OFFSETFLAG_OFFSET_TODAY,
-                                    ORDER_AGAINSTPRICE,
-                                    m_vConfirmedOrder[i].OrderVolumeTotal,
-                                    m_pMarketQuotation->getCurrentPrice(m_vConfirmedHoldTrade[m_hashConfirmedHoldTrade[m_vConfirmedOrder[i].HoldTradeID]].InstrumentID)->AskPrice1,
-                                    &t_lSLOrderRef);
-                                sprintf_s(t_objSLOrderRef, sizeof(t_objSLOrderRef), "%ld", t_lSLOrderRef);
+                                curMinutes = (curtime->tm_hour + 0) * 3600 + curtime->tm_min * 60 + curtime->tm_sec * 1;
+                            }
+                            if (atoi(t_OrderInfoHour) < 20)
+                            {
+                                t_OrderInsertTime = (atoi(t_OrderInfoHour) + 24) * 3600 + atoi(t_OrderInfoMinutes) * 60 + atoi(t_OrderInfoSeconds);
+                            }
+                            else
+                            {
+                                t_OrderInsertTime = (atoi(t_OrderInfoHour) + 0) * 3600 + atoi(t_OrderInfoMinutes) * 60 + atoi(t_OrderInfoSeconds);
+                            }
+                            sprintf_s(t_strLog, sizeof(t_strLog), "%s:curMinutes:%d,|%d:%d:%d", t_strLogFuncName, curMinutes, curtime->tm_hour, curtime->tm_min, curtime->tm_sec);
+                            LOG4CPLUS_TRACE(m_objLogger, t_strLog);
+                            sprintf_s(t_strLog, sizeof(t_strLog), "%s:m_vConfirmedOrder[%d]:%d,%s|%s|%s|%s:%s:%s", t_strLogFuncName, i, t_OrderInsertTime, m_vConfirmedOrder[i].OrderID, m_vConfirmedOrder[i].OrderRef, m_vConfirmedOrder[i].InsertTime, t_OrderInfoHour, t_OrderInfoMinutes, t_OrderInfoSeconds);
+                            LOG4CPLUS_TRACE(m_objLogger, t_strLog);
+                            sprintf_s(t_strLog, sizeof(t_strLog), "%s:m_vConfirmedOrder[%d](%s):curMinutes:%d,t_OrderInsertTime:%d,m_nCancelWaitSeconds:%d", t_strLogFuncName, i, m_vConfirmedOrder[i].OrderID, curMinutes, t_OrderInsertTime, m_nCancelWaitSeconds);
+                            LOG4CPLUS_DEBUG(m_objLogger, t_strLog);
 
-                                /// 止损平仓信息加入m_hashUnpairedOffsetOrder,等待后续匹配
-                                UnpairedOffsetOrder t_objUnpairedOffsetOrder;
-                                memset(&t_objUnpairedOffsetOrder, '\0', sizeof(t_objUnpairedOffsetOrder));
-                                strcpy_s(t_objUnpairedOffsetOrder.TradeID, sizeof(t_objUnpairedOffsetOrder.TradeID), m_vConfirmedOrder[i].HoldTradeID);
-                                strcpy_s(t_objUnpairedOffsetOrder.OrderRef, sizeof(t_objUnpairedOffsetOrder.OrderRef), t_objSLOrderRef);
-                                t_objUnpairedOffsetOrder.OffsetOrderType = OrderOffsetType_SL;
-
-                                m_hashUnpairedOffsetOrder[m_vConfirmedHoldTrade[i].TradeID] = t_objUnpairedOffsetOrder;
-
-                                /// 止损平仓信息加入m_hashAllOrder,等待后续确认
-                                AllOrder t_objAllOrder;
-                                memset(&t_objAllOrder, '\0', sizeof(t_objAllOrder));
-                                strcpy_s(t_objAllOrder.HoldTradeID, sizeof(t_objAllOrder.HoldTradeID), m_vConfirmedOrder[i].HoldTradeID);
-                                strcpy_s(t_objAllOrder.OrderRef, sizeof(t_objAllOrder.OrderRef), t_objSLOrderRef);
-                                t_objAllOrder.OrderType = OrderStatus_SLOffset;
-                                t_objAllOrder.updateOrderRoundSequence = m_nUpdateOrderTimes;
-
-                                m_hashAllOrder[t_objSLOrderRef] = t_objAllOrder;
-                                sprintf_s(t_strLog, sizeof(t_strLog), "%s:止损平仓撤单后补报(%s)", t_strLogFuncName, t_objSLOrderRef);
+                            if (curMinutes - t_OrderInsertTime >= m_nCancelWaitSeconds)
+                            {
+                                t_blCancelAction = true;
+                                sprintf_s(t_strLog, sizeof(t_strLog), "%s:撤单m_vConfirmedOrder[%d](%s)", t_strLogFuncName, i, m_vConfirmedOrder[i].OrderID);
                                 LOG4CPLUS_INFO(m_objLogger, t_strLog);
+                            }
+                            else
+                            {
+                                t_blCancelAction = false;
+                            }
+#pragma endregion
+                            if (t_blCancelAction)
+                            {
+                                /// 撤单
+                                bool t_blCanelNOTSPOrder = true;
+                                while (t_blCanelNOTSPOrder)
+                                {
+                                    switch (m_vConfirmedOrder[i].OrderStatus)
+                                    {
+                                    case THOST_FTDC_OST_PartTradedQueueing:
+                                    case THOST_FTDC_OST_NoTradeQueueing:
+                                        m_pTrade->MyCancelOrder(m_vConfirmedOrder[i].OrderID);
+                                        Sleep(100);
+                                        break;
+                                    default:
+                                        t_blCanelNOTSPOrder = false;
+                                        break;
+                                    }
+                                }
+
+                                /// ERROR 更新不及时，导致撤不可撤单。后续报单平错误持仓
+
+                                /// 如果是止损平仓报单则继续报入,开仓不做处理
+                                if (m_vConfirmedOrder[i].OrderType == OrderStatus_SLOffset)
+                                {
+                                    UniversalChinaFutureTdOrderRefType t_objSLOrderRef;
+                                    long t_lSLOrderRef;
+                                    m_pTrade->MyOrdering(m_vConfirmedHoldTrade[m_hashConfirmedHoldTrade[m_vConfirmedOrder[i].HoldTradeID]].InstrumentID,
+                                        m_vConfirmedHoldTrade[m_hashConfirmedHoldTrade[m_vConfirmedOrder[i].HoldTradeID]].Direction == THOST_FTDC_D_Buy ? ORDER_DIRECTION_SELL : ORDER_DIRECTION_BUY,
+                                        ORDER_OFFSETFLAG_OFFSET_TODAY,
+                                        ORDER_AGAINSTPRICE,
+                                        m_vConfirmedOrder[i].OrderVolumeTotal,
+                                        m_pMarketQuotation->getCurrentPrice(m_vConfirmedHoldTrade[m_hashConfirmedHoldTrade[m_vConfirmedOrder[i].HoldTradeID]].InstrumentID)->AskPrice1,
+                                        &t_lSLOrderRef);
+                                    sprintf_s(t_objSLOrderRef, sizeof(t_objSLOrderRef), "%ld", t_lSLOrderRef);
+
+                                    /// 止损平仓信息加入m_hashUnpairedOffsetOrder,等待后续匹配
+                                    UnpairedOffsetOrder t_objUnpairedOffsetOrder;
+                                    memset(&t_objUnpairedOffsetOrder, '\0', sizeof(t_objUnpairedOffsetOrder));
+                                    strcpy_s(t_objUnpairedOffsetOrder.TradeID, sizeof(t_objUnpairedOffsetOrder.TradeID), m_vConfirmedOrder[i].HoldTradeID);
+                                    strcpy_s(t_objUnpairedOffsetOrder.OrderRef, sizeof(t_objUnpairedOffsetOrder.OrderRef), t_objSLOrderRef);
+                                    t_objUnpairedOffsetOrder.OffsetOrderType = OrderOffsetType_SL;
+
+                                    m_hashUnpairedOffsetOrder[m_vConfirmedHoldTrade[i].TradeID] = t_objUnpairedOffsetOrder;
+
+                                    /// 止损平仓信息加入m_hashAllOrder,等待后续确认
+                                    AllOrder t_objAllOrder;
+                                    memset(&t_objAllOrder, '\0', sizeof(t_objAllOrder));
+                                    strcpy_s(t_objAllOrder.HoldTradeID, sizeof(t_objAllOrder.HoldTradeID), m_vConfirmedOrder[i].HoldTradeID);
+                                    strcpy_s(t_objAllOrder.OrderRef, sizeof(t_objAllOrder.OrderRef), t_objSLOrderRef);
+                                    t_objAllOrder.OrderType = OrderStatus_SLOffset;
+                                    t_objAllOrder.updateOrderRoundSequence = m_nUpdateOrderTimes;
+
+                                    m_hashAllOrder[t_objSLOrderRef] = t_objAllOrder;
+                                    sprintf_s(t_strLog, sizeof(t_strLog), "%s:止损平仓撤单后补报(%s)", t_strLogFuncName, t_objSLOrderRef);
+                                    LOG4CPLUS_INFO(m_objLogger, t_strLog);
+                                }
                             }
                         }
                     }
@@ -1268,5 +1288,17 @@ void axapi::Strategy::getPreOffsetPrice(ConfirmedHoldTrade in_objHoldTrade, bool
 
     *ot_dbSPOffsetPrice = in_objHoldTrade.Price - 10;
     *ot_blSPOffsetFlag = true;
+}
+#endif STRATEGY_EXE
+
+#ifdef STRATEGY_EXE
+void axapi::Strategy::myCancelStrategy(struct ConfirmedOrder in_objOrder, bool *ot_blCancelFlag, std::string *ot_strCancelMsg)
+{
+    char *t_strLogFuncName = "Strategy::myCancelStrategy";
+    char t_strLog[500];
+    sprintf_s(t_strLog, sizeof(t_strLog), "%s", t_strLogFuncName);
+    LOG4CPLUS_TRACE(m_objLogger, t_strLog);
+
+    *ot_blCancelFlag = false;
 }
 #endif STRATEGY_EXE
