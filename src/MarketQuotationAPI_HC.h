@@ -1,20 +1,19 @@
-#pragma once
-#ifndef _MARKETQUOTATIONAPI_H_
-#define _MARKETQUOTATIONAPI_H_
+#ifndef _MARKETQUOTATIONAPI_HC_H_
+#define _MARKETQUOTATIONAPI_HC_H_
 #pragma once
 
 #define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 
-#ifdef MarketQuotationAPI_EXE
-#define MarketQuotationAPI_EXPORT
+#ifdef MarketQuotationAPI_HC_EXE
+#define MarketQuotationAPI_HC_EXPORT
 #else
-#ifdef MarketQuotationAPI_EXP
-#define MarketQuotationAPI_EXPORT __declspec(dllexport)
+#ifdef MarketQuotationAPI_HC_EXP
+#define MarketQuotationAPI_HC_EXPORT __declspec(dllexport)
 #else
-#define MarketQuotationAPI_EXPORT __declspec(dllimport)
-#endif MarketQuotationAPI_EXP
-#endif MarketQuotationAPI_EXE
+#define MarketQuotationAPI_HC_EXPORT __declspec(dllimport)
+#endif MarketQuotationAPI_HC_EXP
+#endif MarketQuotationAPI_HC_EXE
 
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>
@@ -26,12 +25,14 @@
 #include <time.h>
 #include <vector>
 #include <hash_map>
-#ifdef KLINESTORAGE
-#include <vector>
-#endif KLINESTORAGE
 #include <string>
+#ifdef DBDataSource
+#include <otlv4.h>
+#endif DBDataSource
 
 #include <CTPTdMd_API_common/ThostFtdcMdApi.h>
+#include "MarketQuotationAPI_HC_Defination.h"
+#include "ClockSimulated.h"
 #define  APINamespace
 
 #ifdef HQDATAFILE
@@ -40,10 +41,6 @@
 #ifdef KDATAFILE
 #define DATAFILE
 #endif KDATAFILE
-
-#ifdef DATAFILE
-#include <DataIntoFiles\DataIntoFiles.h>
-#endif DATAFILE
 
 #ifndef WAITFORCLOSEFILE
 #define WAITFORCLOSEFILE 2000
@@ -203,7 +200,7 @@ namespace axapi
         int  OffsetValue;
     };
 
-    class MarketQuotationAPI_EXPORT MarketQuotationAPI : public APINamespace CThostFtdcMdSpi
+    class MarketQuotationAPI_HC_EXPORT MarketQuotationAPI_HC : public APINamespace CThostFtdcMdSpi
     {
         /*
         * 初始化
@@ -214,43 +211,24 @@ namespace axapi
         log4cplus::Logger m_root;
         /// 用于日志,初始化必须设置
         log4cplus::Logger m_objLogger;
+#ifdef DBDataSource
+        /// 数据库连接
+        otl_connect m_DBConnector;
+#endif DBDataSource
         /// 账号信息 经纪商ID
-        APINamespace TThostFtdcBrokerIDType m_strBrokerID;
+        ///APINamespace TThostFtdcBrokerIDType m_strBrokerID;
         /// 账号信息 客户号
-        APINamespace TThostFtdcUserIDType m_strUserID;
+        ///APINamespace TThostFtdcUserIDType m_strUserID;
         /// 账号信息 客户密码
-        APINamespace TThostFtdcPasswordType m_strPassword;
+        ///APINamespace TThostFtdcPasswordType m_strPassword;
         /// 链接行情服务器
-        int initializeConnection(APINamespace TThostFtdcBrokerIDType, APINamespace TThostFtdcUserIDType, APINamespace TThostFtdcPasswordType, char*);
+        ///int initializeConnection(APINamespace TThostFtdcBrokerIDType, APINamespace TThostFtdcUserIDType, APINamespace TThostFtdcPasswordType, char*);
         /// 初始化日志文件
         int initializeLog();
     public:
-        MarketQuotationAPI(void);
-        MarketQuotationAPI(APINamespace TThostFtdcBrokerIDType, APINamespace TThostFtdcUserIDType, APINamespace TThostFtdcPasswordType, char*);
-        ~MarketQuotationAPI(void);
-#pragma endregion
-
-        /*
-        * 当前API接口状态
-        * 接口运行变量
-        */
-#pragma region
-    private:
-        /// 请求id，递增变量
-        int m_nRequestID;
-        /// 记录收到数据量
-        int m_nRecievedDataCount;
-        /// 事件锁
-        HANDLE m_hInitEvent;
-        /// 行情接口请求
-        APINamespace CThostFtdcMdApi *m_pUserApi;
-        /// 接口状态
-        APIStatus m_nAPIStatus;
-        /// 设置接口状态
-        void setAPIStatus(APIStatus);
-    public:
-        /// 获得接口运行状态
-        APIStatus getAPIStatus();
+        MarketQuotationAPI_HC(void);
+        //MarketQuotationAPI_HC(APINamespace TThostFtdcBrokerIDType, APINamespace TThostFtdcUserIDType, APINamespace TThostFtdcPasswordType, char*);
+        ~MarketQuotationAPI_HC(void);
 #pragma endregion
 
         /*
@@ -258,8 +236,16 @@ namespace axapi
         */
 #pragma region
     private:
+        /// 模拟时钟
+        axapi::ClockSimulated *m_pClockSimulated;
         /// 最新行情存储结构
         std::hash_map<std::string, struct MarketDataField> m_hashMarketDataList;
+        std::vector<struct MarketDataField> m_vMarketData;
+        std::vector<TradingClockField> m_vTradingClock;
+        /// 装载数据库中指定合约的行情数据
+        int loadMarketData(const char*, const char*);
+        /// 装载时间轴
+        int loadTimeline();
 #ifdef KLINESTORAGE
         /// 1分钟K线存储结构,eg.订阅2个合约,存储2个合约1分钟K线的头地址
         std::vector<KMarketDataField*> m_array1mKLine;
@@ -280,57 +266,36 @@ namespace axapi
         /// 时间轴数据，记录交易时间与K线序列的对应
         TradingMinuteField **m_TradingTimeLine;
         /// 初始化K线时间线数据
-        void initiateTradingTimeLine(char**, int);
+        void initiateTradingTimeLine(char**, int) {};
         /// 订阅新合约初始化K线存储
-        int initialKMarketDataSingle(const char*);
+        int initialKMarketDataSingle(const char*) {};
         /// 查找合约是否已订阅，并获取到合约数据索引号
-        int findMarketDataIndex(const char*);
+        int findMarketDataIndex(const char*) {};
         /// (弃用)查找当前时间是否属于交易时间内以及时间轴上位置
-        int findCurrentTradingTimeLineOffset();
+        int findCurrentTradingTimeLineOffset() {};
         /// 查找当前时间是否属于指定合约交易时间内以及时间轴上位置
-        int findCurrentTradingTimeLineOffset(const char*);
+        int findCurrentTradingTimeLineOffset(const char*) {};
         /// 记录K线数据
-        void recordKData(const char*);
+        void recordKData(const char*) {};
 #endif KLINESTORAGE
     public:
         /// 订阅多个行情
-        void subMarketData(char *pInstrumentList[], int in_nInstrumentCount);
+        void subMarketData(char *pInstrumentList[], int in_nInstrumentCount, char* pTradingday);
         /// 订阅一个行情
-        int subMarketDataSingle(char *in_strInstrument);
+        int subMarketDataSingle(char *in_strInstrument, char *pTradingday);
         /// 得到指定合约的行情
-        double getCurrPrice(const char *in_strInstrument);
+        double getCurrPrice(const char *in_strInstrument) {};
         MarketDataField *getCurrentPrice(const char *in_strInstrument);
+        /// 用于测试最大模拟速度 第二个参数用于回写模拟行情的序列号
+        MarketDataField *getCurrentPrice(const char *in_strInstrument, int *);
+        /// 初始化模拟时钟,用已经加载好的时间轴数据初始化外部的时钟
+        int initialClockSimulated(ClockSimulated*);
 #ifdef KLINESTORAGE
         /// 得到指定合约的K线数据,指定与最新K线的偏移量,默认得到最新的1分钟K线数据
-        KMarketDataField *getKLine(const char *in_strInstrument, int in_iSecondsPeriod = 1, int in_iCurrentOffset = 0);
+        KMarketDataField *getKLine(const char *in_strInstrument, int in_iSecondsPeriod = 1, int in_iCurrentOffset = 0) {};
         /// 得到指定合约的K线数据,指定所处当天K线的位置,默认得到第一分钟的1分钟K线数据
-        KMarketDataField *getKLineBySerials(const char *in_strInstrument, int in_iSecondsPeriod = 1, int in_iPosition = 1);
+        KMarketDataField *getKLineBySerials(const char *in_strInstrument, int in_iSecondsPeriod = 1, int in_iPosition = 1) {};
 #endif KLINESTORAGE
-#pragma endregion
-
-        /*
-        * 数据落地
-        */
-#pragma region
-    private:
-#ifdef HQDATAFILE
-        /// 实时行情写文件接口
-        DataIntoFiles *m_pHQDataIntoFiles;
-        /// 初始化实时行情写文件组件
-        void initializeHQDataIntoFiles();
-#endif HQDATAFILE
-#ifdef KLINESTORAGE
-#ifdef KDATAFILE
-        /// KBar写文件接口
-        DataIntoFiles *m_pKBarDataIntoFiles;
-        /// 初始化KBar写文件组件
-        void initializeKBarDataIntoFiles();
-#endif KDATAFILE
-        /// KBar落地
-        void writeKBarData();
-#endif KLINESTORAGE
-        /// 实时行情落地
-        void writeHQData(APINamespace CThostFtdcDepthMarketDataField *);
 #pragma endregion
 
         /*
@@ -347,50 +312,17 @@ namespace axapi
         double m_nCFFEXTimeDiff;
         double m_nIMETimeDiff;
         /// 通过交易所名字获取到交易所时间（本地时间+/-交易所时间差）
-        double getExchangeTime(char*);
+        double getExchangeTime(char*) {};
         /// 获取本地时间
-        double getLocalTime();
+        double getLocalTime() {};
         /// 通过时间格式字符串(hh24:mi:ss)获取时间
-        double getTimebyFormat(char*);
+        double getTimebyFormat(char*) {};
     public:
         /// 判断传入时间是否大于指定交易所时间
-        bool overTime(char*, tm*);
+        bool overTime(char*, tm*) {};
 #pragma endregion
 
-        /*
-        * 柜台接口提供
-        */
-#pragma region
-    private:
-        /// 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用。
-        virtual void OnFrontConnected();
-        ///当客户端与交易后台通信连接断开时，该方法被调用。当发生这个情况后，API会自动重新连接，客户端可不做处理。
-        ///@param nReason 错误原因
-        ///        0x1001 网络读失败
-        ///        0x1002 网络写失败
-        ///        0x2001 接收心跳超时
-        ///        0x2002 发送心跳失败
-        ///        0x2003 收到错误报文
-        ///        0x2004 服务器主动断开
-        virtual void OnFrontDisconnected(int nReason);
-        /// 心跳超时警告。当长时间未收到报文时，该方法被调用。
-        /// @param nTimeLapse 距离上次接收报文的时间
-        virtual void OnHeartBeatWarning(int nTimeLapse);
-        /// 登录请求响应
-        virtual void OnRspUserLogin(APINamespace CThostFtdcRspUserLoginField *pRspUserLogin, APINamespace CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
-        /// 登出请求响应
-        virtual void OnRspUserLogout(APINamespace CThostFtdcUserLogoutField *pUserLogout, APINamespace CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
-        /// 错误应答
-        virtual void OnRspError(APINamespace CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
-        /// 订阅行情应答
-        virtual void OnRspSubMarketData(APINamespace CThostFtdcSpecificInstrumentField *pSpecificInstrument, APINamespace CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
-        /// 取消订阅行情应答
-        virtual void OnRspUnSubMarketData(APINamespace CThostFtdcSpecificInstrumentField *pSpecificInstrument, APINamespace CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
-        /// 深度行情通知
-        virtual void OnRtnDepthMarketData(APINamespace CThostFtdcDepthMarketDataField *pDepthMarketData);
-    public:
-#pragma endregion
     };
 }
 
-#endif _MARKETQUOTATIONAPI_H_
+#endif _MARKETQUOTATIONAPI_HC_H_

@@ -89,11 +89,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)src\;$(SolutionDir)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\;$(SolutionDir)include;$(SolutionDir)include\oci;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;$(SolutionDir)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>log4cplusUD.lib;oci.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -147,10 +149,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\ClockSimulated.h" />
     <ClInclude Include="..\src\MarketQuotationAPI_HC.h" />
+    <ClInclude Include="..\src\MarketQuotationAPI_HC_Defination.h" />
+    <ClInclude Include="..\src\TradeAPI_HC.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\ClockSimulated.cpp" />
     <ClCompile Include="..\src\MarketQuotationAPI_HC.cpp" />
+    <ClCompile Include="..\src\MarketQuotationAPI_HC_main.cpp" />
+    <ClCompile Include="..\src\MarketQuotationAPI_HC_main20190905.cpp" />
+    <ClCompile Include="..\src\TradeAPI_HC.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

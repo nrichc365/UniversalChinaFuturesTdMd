@@ -1129,7 +1129,7 @@ void axapi::MarketQuotationAPI::subMarketData(char *pInstrumentList[], int in_nI
 
     while (true)
     {
-        if (m_pUserApi->SubscribeMarketData(pInstrumentList, 503) == 0)
+        if (m_pUserApi->SubscribeMarketData(pInstrumentList, in_nInstrumentCount) == 0)
         {
             sprintf_s(t_strLog, "%s:%s", t_strLogFuncName, "行情订阅成功");
             LOG4CPLUS_INFO(m_objLogger, t_strLog);

@@ -18,9 +18,30 @@
     <ClInclude Include="..\src\MarketQuotationAPI_HC.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ClockSimulated.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\MarketQuotationAPI_HC_Defination.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\TradeAPI_HC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\MarketQuotationAPI_HC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MarketQuotationAPI_HC_main20190905.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MarketQuotationAPI_HC_main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ClockSimulated.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\TradeAPI_HC.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
