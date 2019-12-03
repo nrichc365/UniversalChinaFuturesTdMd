@@ -3284,7 +3284,7 @@ int axapi::TradeAPI::insertorUpdateInstrument(APINamespace CThostFtdcInstrumentF
 /// 处理所有插入或者更新instrumentStatus的操作,ret:0 正常
 int axapi::TradeAPI::insertorUpdateInstrumentStatus(APINamespace CThostFtdcInstrumentStatusField *pInstrumentStatus)
 {
-    char* t_strLogFuncName = "TradeAPI::insertorUpdateInstrument";
+    char* t_strLogFuncName = "TradeAPI::insertorUpdateInstrumentStatus";
     char t_strLog[2000];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
     LOG4CPLUS_TRACE(m_objLogger, t_strLog);
@@ -3359,7 +3359,7 @@ int axapi::TradeAPI::queryCustDone()
 /// 查询资金,结果入库或者进入内存结果,ret:Requestid
 int axapi::TradeAPI::queryCustFund()
 {
-    char* t_strLogFuncName = "TradeAPI::queryCustDone";
+    char* t_strLogFuncName = "TradeAPI::queryCustFund";
     char t_strLog[500];
     sprintf_s(t_strLog, 500, "%s", t_strLogFuncName);
     LOG4CPLUS_TRACE(m_objLogger, t_strLog);
